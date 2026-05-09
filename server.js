@@ -10,10 +10,16 @@ connectDB();
 // Middleware for parsing JSON
 app.use(express.json());
 
+const { getStats, getProducts } = require('./controllers/productController');
+
 // Basic Route for testing
 app.get('/', (req, res) => {
     res.send('Chain and Straps API is running...');
 });
+
+// Admin Dashboard Routes
+app.get('/api/stats', getStats);
+app.get('/api/products', getProducts);
 
 const PORT = process.env.PORT || 5000;
 
