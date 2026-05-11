@@ -1,4 +1,6 @@
-const Product = require('../models/Product'); // Ensure this model path matches
+const Product = require('../models/Product');
+const Settings = require('../models/Settings');
+const Log = require('../models/Log');
 
 // 1. Statistics API: Dashboard ke top cards ke liye
 exports.getStats = async (req, res) => {
@@ -51,6 +53,46 @@ exports.getProducts = async (req, res) => {
             currentPage: page,
             data: products
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 3. Settings API: Get and Update Pinterest Tokens
+exports.getSettings = async (req, res) => {
+    try {
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = await Settings.create({ accounts: [], automationRunning: false });
+        }
+        res.status(200).json({ success: true, settings });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.updateSettings = async (req, res) => {
+    try {
+        const { accounts, automationRunning } = req.body;
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = new Settings();
+        }
+        if (accounts) settings.accounts = accounts;
+        if (automationRunning !== undefined) settings.automationRunning = automationRunning;
+        
+        await settings.save();
+        res.status(200).json({ success: true, settings });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 4. Logs API: Fetch automation error/success logs
+exports.getLogs = async (req, res) => {
+    try {
+        const logs = await Log.find().sort({ createdAt: -1 }).limit(50);
+        res.status(200).json({ success: true, logs });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

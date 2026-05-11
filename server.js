@@ -10,7 +10,7 @@ connectDB();
 // Middleware for parsing JSON
 app.use(express.json());
 
-const { getStats, getProducts } = require('./controllers/productController');
+const { getStats, getProducts, getSettings, updateSettings, getLogs } = require('./controllers/productController');
 
 // Basic Route for testing
 app.get('/', (req, res) => {
@@ -20,6 +20,9 @@ app.get('/', (req, res) => {
 // Admin Dashboard Routes
 app.get('/api/stats', getStats);
 app.get('/api/products', getProducts);
+app.get('/api/settings', getSettings);
+app.post('/api/settings', updateSettings);
+app.get('/api/logs', getLogs);
 
 const PORT = process.env.PORT || 5000;
 
