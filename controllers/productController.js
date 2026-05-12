@@ -30,36 +30,43 @@ exports.getProducts = async (req, res) => {
         limit = parseInt(limit);
         const skipVal = skip !== undefined ? parseInt(skip) : (page - 1) * limit;
 
-        // Search Filter
-        const matchStage = {};
+        // Only match rows that have a real Title AND a valid price
+        const matchStage = {
+            Title: { $exists: true, $ne: '', $ne: null },
+            'Variant Price': { $exists: true, $gt: 0 }
+        };
         if (search) {
-            matchStage.Title = { $regex: search, $options: 'i' };
+            matchStage.$or = [
+                { Title: { $regex: search, $options: 'i' } },
+                { vendor: { $regex: search, $options: 'i' } }
+            ];
         }
 
-        // Aggregate: Group multiple rows of same product (same Handle) into one doc with all images
         const pipeline = [
             { $match: matchStage },
             {
                 $group: {
                     _id: '$Handle',
-                    Title: { $first: '$Title' },
+                    Title: { $max: '$Title' },          // picks non-null value
                     Handle: { $first: '$Handle' },
-                    vendor: { $first: '$vendor' },
-                    'Variant Price': { $first: '$Variant Price' },
+                    vendor: { $max: '$vendor' },
+                    'Variant Price': { $max: '$Variant Price' },
                     status: { $first: '$status' },
-                    images: { $push: '$Image Src' }, // All images collected into array
+                    images: { $push: '$Image Src' },
                     createdAt: { $first: '$createdAt' }
                 }
             },
+            // Remove any that still have bad data after grouping
+            { $match: { Title: { $ne: null, $ne: '' }, 'Variant Price': { $gt: 0 } } },
             { $sort: { createdAt: -1 } },
             { $skip: skipVal },
             { $limit: limit }
         ];
 
-        // Count pipeline (without skip/limit)
         const countPipeline = [
             { $match: matchStage },
-            { $group: { _id: '$Handle' } },
+            { $group: { _id: '$Handle', Title: { $max: '$Title' }, price: { $max: '$Variant Price' } } },
+            { $match: { Title: { $ne: null, $ne: '' }, price: { $gt: 0 } } },
             { $count: 'total' }
         ];
 
