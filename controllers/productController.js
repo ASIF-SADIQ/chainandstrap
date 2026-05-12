@@ -97,6 +97,7 @@ exports.getProductByHandle = async (req, res) => {
                     Handle: { $first: '$Handle' },
                     vendor: { $first: '$vendor' },
                     'Variant Price': { $first: '$Variant Price' },
+                    'Body (HTML)': { $first: '$Body (HTML)' },
                     status: { $first: '$status' },
                     images: { $push: '$Image Src' }
                 }

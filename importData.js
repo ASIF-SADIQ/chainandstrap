@@ -26,6 +26,7 @@ const importData = async () => {
                     Handle: row.Handle || row.handle || `product-${Math.floor(Math.random()*10000)}`,
                     'Variant Price': parseFloat(row['Variant Price'] || row.price || 0),
                     'Image Src': row['Image Src'] || row.image_url || '',
+                    'Body (HTML)': row['Body (HTML)'] || row.description || '',
                     status: 'pending'
                 });
             })

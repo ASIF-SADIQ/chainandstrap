@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema({
     Handle: String,
     'Variant Price': Number,
     'Image Src': String,
+    'Body (HTML)': String,
     status: { type: String, default: 'pending' },
     createdAt: { type: Date, default: Date.now }
 });
