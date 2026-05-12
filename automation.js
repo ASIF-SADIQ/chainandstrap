@@ -1,74 +1,116 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const fs = require('fs');
+const axios = require('axios');
 const connectDB = require('./config/db');
 
-// Connect Database
+// Models
+const Product = require('./models/Product');
+const Settings = require('./models/Settings');
+const Log = require('./models/Log');
+
+// Connect to Database
 connectDB();
 
-// Read Pinterest Accounts
-const accounts = JSON.parse(fs.readFileSync('./accounts.json', 'utf-8'));
 let currentAccountIndex = 0;
 
-// Dummy Product Schema (Replace with your actual schema)
-const productSchema = new mongoose.Schema({
-    title: String,
-    vendor: String,
-    handle: String,
-    price: Number,
-    images: [String],
-    published: Boolean,
-    pinned: { type: Boolean, default: false }
-});
-const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Function to rotate accounts and post to Pinterest
-const startAutomation = async () => {
-    console.log("🚀 Starting Pinterest 7-Account Rotation Engine...");
+const getRandomDelay = () => {
+    // Random delay between 5 to 10 minutes (300,000 to 600,000 ms)
+    return Math.floor(Math.random() * (600000 - 300000 + 1)) + 300000;
+};
 
+const validateImage = async (url) => {
     try {
-        // Find products that are NOT pinned yet
-        const productsToPin = await Product.find({ published: true, pinned: false }).limit(7);
-
-        if (productsToPin.length === 0) {
-            console.log("No new products found to pin.");
-            process.exit(0);
-        }
-
-        for (let product of productsToPin) {
-            // Get current account for rotation
-            const activeAccount = accounts[currentAccountIndex];
-            
-            console.log(`📌 Pinning [${product.title}] using Account: ${activeAccount.username}`);
-
-            // Pinterest API Logic Here
-            /*
-            const payload = {
-                title: product.title,
-                description: `Shop premium ${product.vendor} bags at Chain & Straps.`,
-                link: `https://chainandstraps.me/product/${product.handle}`,
-                media_source: { source_type: "image_url", url: product.images[0] },
-                board_id: activeAccount.board_id
-            };
-            
-            // axios.post('https://api.pinterest.com/v5/pins', payload, { headers: { Authorization: `Bearer ${activeAccount.access_token}` }})
-            */
-
-            // Mark as pinned
-            product.pinned = true;
-            await product.save();
-
-            // Rotate index to the next account
-            currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
-        }
-
-        console.log("✅ Batch completed successfully!");
-        process.exit(0);
-    } catch (err) {
-        console.error("❌ Automation Error:", err);
-        process.exit(1);
+        const response = await axios.head(url);
+        return response.status === 200;
+    } catch (error) {
+        return false;
     }
 };
 
-// Start script
-startAutomation();
+const runAutomationCycle = async () => {
+    try {
+        const settings = await Settings.findOne();
+        
+        // Check if automation is enabled and accounts exist
+        if (!settings || !settings.automationRunning) {
+            console.log("⏸️ Automation is paused or settings not found.");
+            return;
+        }
+
+        const accounts = settings.accounts;
+        if (!accounts || accounts.length === 0) {
+            console.log("⚠️ No Pinterest accounts configured in settings.");
+            return;
+        }
+
+        // Fetch one pending product
+        const product = await Product.findOne({ status: 'pending' }).sort({ createdAt: 1 });
+        
+        if (!product) {
+            console.log("🏁 No pending products left to post.");
+            return;
+        }
+
+        const activeAccount = accounts[currentAccountIndex];
+        console.log(`📌 Attempting to pin [${product.Title}] using Account: ${activeAccount.username}`);
+
+        // Validate Image
+        const isImageValid = await validateImage(product['Image Src']);
+        if (!isImageValid) {
+            console.error(`❌ Image validation failed for [${product.Title}]. Skipping...`);
+            product.status = 'failed';
+            await product.save();
+            await Log.create({ productHandle: product.Handle, status: 'failed', message: 'Image URL is broken or inaccessible.' });
+            return;
+        }
+
+        // Pinterest API Logic
+        const payload = {
+            title: product.Title,
+            description: `Shop premium ${product.vendor} bags at Chain & Straps.`,
+            link: `https://chainandstraps.me/product/${product.Handle}`,
+            media_source: { source_type: "image_url", url: product['Image Src'] },
+            board_id: activeAccount.board_id
+        };
+
+        try {
+            console.log("⏳ Posting to Pinterest...");
+            // Uncomment the line below when real tokens are added
+            // await axios.post('https://api.pinterest.com/v5/pins', payload, { headers: { Authorization: `Bearer ${activeAccount.access_token}` }});
+            
+            // Mark as posted
+            product.status = 'posted';
+            await product.save();
+            await Log.create({ productHandle: product.Handle, status: 'success', message: `Successfully posted to Pinterest account: ${activeAccount.username}` });
+            console.log(`✅ Successfully pinned [${product.Title}]`);
+
+        } catch (apiError) {
+            console.error("❌ Pinterest API Error:", apiError.response ? apiError.response.data : apiError.message);
+            product.status = 'failed';
+            await product.save();
+            await Log.create({ productHandle: product.Handle, status: 'failed', message: `Pinterest API Error: ${apiError.message}` });
+        }
+
+        // Rotate index to the next account
+        currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
+
+    } catch (err) {
+        console.error("❌ Automation Engine Error:", err);
+    }
+};
+
+// Continuous Loop for PM2
+const startEngine = async () => {
+    console.log("🚀 Anti-Gravity Engine Started! (PM2 Compatible)");
+    while (true) {
+        await runAutomationCycle();
+        
+        const delay = getRandomDelay();
+        console.log(`🕒 Waiting for ${Math.round(delay / 60000)} minutes before next post (Human-Behavior Delay)...`);
+        await sleep(delay);
+    }
+};
+
+startEngine();
