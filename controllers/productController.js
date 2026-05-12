@@ -21,7 +21,7 @@ exports.getStats = async (req, res) => {
     }
 };
 
-// 2. Optimized Products API: Search aur Pagination ke liye
+// 2. Optimized Products API: Search, Pagination, Grouping by Handle
 exports.getProducts = async (req, res) => {
     try {
         let { page = 1, limit = 20, search = '', skip } = req.query;
@@ -31,29 +31,44 @@ exports.getProducts = async (req, res) => {
         const skipVal = skip !== undefined ? parseInt(skip) : (page - 1) * limit;
 
         // Search Filter
-        const query = {};
+        const matchStage = {};
         if (search) {
-            query.Title = { $regex: search, $options: 'i' };
+            matchStage.Title = { $regex: search, $options: 'i' };
         }
 
-        // Use projection object for fields with spaces
-        const projection = {
-            Title: 1,
-            Handle: 1,
-            'Image Src': 1,
-            'Variant Price': 1,
-            vendor: 1,
-            Vendor: 1,
-            status: 1
-        };
+        // Aggregate: Group multiple rows of same product (same Handle) into one doc with all images
+        const pipeline = [
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: '$Handle',
+                    Title: { $first: '$Title' },
+                    Handle: { $first: '$Handle' },
+                    vendor: { $first: '$vendor' },
+                    'Variant Price': { $first: '$Variant Price' },
+                    status: { $first: '$status' },
+                    images: { $push: '$Image Src' }, // All images collected into array
+                    createdAt: { $first: '$createdAt' }
+                }
+            },
+            { $sort: { createdAt: -1 } },
+            { $skip: skipVal },
+            { $limit: limit }
+        ];
 
-        const products = await Product.find(query, projection)
-            .limit(limit)
-            .skip(skipVal)
-            .sort({ createdAt: -1 })
-            .lean();
+        // Count pipeline (without skip/limit)
+        const countPipeline = [
+            { $match: matchStage },
+            { $group: { _id: '$Handle' } },
+            { $count: 'total' }
+        ];
 
-        const total = await Product.countDocuments(query);
+        const [products, countResult] = await Promise.all([
+            Product.aggregate(pipeline),
+            Product.aggregate(countPipeline)
+        ]);
+
+        const total = countResult[0]?.total || 0;
 
         res.status(200).json({
             success: true,
@@ -63,6 +78,38 @@ exports.getProducts = async (req, res) => {
             currentPage: page,
             data: products
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 2b. Single product by Handle
+exports.getProductByHandle = async (req, res) => {
+    try {
+        const { handle } = req.params;
+
+        const pipeline = [
+            { $match: { Handle: handle } },
+            {
+                $group: {
+                    _id: '$Handle',
+                    Title: { $first: '$Title' },
+                    Handle: { $first: '$Handle' },
+                    vendor: { $first: '$vendor' },
+                    'Variant Price': { $first: '$Variant Price' },
+                    status: { $first: '$status' },
+                    images: { $push: '$Image Src' }
+                }
+            }
+        ];
+
+        const results = await Product.aggregate(pipeline);
+
+        if (!results || results.length === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        res.status(200).json({ success: true, data: results[0] });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
