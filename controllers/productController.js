@@ -24,32 +24,42 @@ exports.getStats = async (req, res) => {
 // 2. Optimized Products API: Search aur Pagination ke liye
 exports.getProducts = async (req, res) => {
     try {
-        // Query parameters se values lein (Default: Page 1, Limit 20)
-        let { page = 1, limit = 20, search = '' } = req.query;
-        
+        let { page = 1, limit = 20, search = '', skip } = req.query;
+
         page = parseInt(page);
         limit = parseInt(limit);
+        const skipVal = skip !== undefined ? parseInt(skip) : (page - 1) * limit;
 
-        // Search Filter: Agar search term hai toh Regex use karein
+        // Search Filter
         const query = {};
         if (search) {
-            query.Title = { $regex: search, $options: 'i' }; // 'i' ka matlab case-insensitive
+            query.Title = { $regex: search, $options: 'i' };
         }
 
-        // Database Query: Sirf utna data fetch karein jo screen par dikhana hai
-        const products = await Product.find(query)
-            .select('Title Handle Image Src Variant Price status') // Sirf zaroori columns mangwayein
-            .limit(limit)
-            .skip((page - 1) * limit)
-            .sort({ createdAt: -1 }) // Naye products pehle
-            .lean(); // .lean() Mongoose object ko simple JS object bana deta hai
+        // Use projection object for fields with spaces
+        const projection = {
+            Title: 1,
+            Handle: 1,
+            'Image Src': 1,
+            'Variant Price': 1,
+            vendor: 1,
+            Vendor: 1,
+            status: 1
+        };
 
-        const totalProducts = await Product.countDocuments(query);
+        const products = await Product.find(query, projection)
+            .limit(limit)
+            .skip(skipVal)
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const total = await Product.countDocuments(query);
 
         res.status(200).json({
             success: true,
             count: products.length,
-            totalPages: Math.ceil(totalProducts / limit),
+            total,
+            totalPages: Math.ceil(total / limit),
             currentPage: page,
             data: products
         });
