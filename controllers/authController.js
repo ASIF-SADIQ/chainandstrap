@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const { generateOtp, sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
+const { generateOtp, sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'chainstraps_secret_2024';
 
@@ -74,6 +74,9 @@ exports.verifyEmail = async (req, res) => {
         user.otp = null;
         user.otpExpiry = null;
         await user.save();
+
+        // Send welcome email (non-blocking)
+        sendWelcomeEmail(user.email, user.name).catch(() => {});
 
         res.status(200).json({
             success: true,
