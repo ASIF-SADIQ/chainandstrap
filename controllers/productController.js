@@ -30,9 +30,9 @@ exports.getProducts = async (req, res) => {
         limit = parseInt(limit);
         const skipVal = skip !== undefined ? parseInt(skip) : (page - 1) * limit;
 
-        // Only match rows that have a real Title AND a valid price
+        // Only match rows with a real non-empty Title AND valid price > 0
         const matchStage = {
-            Title: { $exists: true, $ne: '', $ne: null },
+            Title: { $exists: true, $nin: ['', null, 'undefined'] },
             'Variant Price': { $exists: true, $gt: 0 }
         };
         if (search) {
@@ -47,7 +47,7 @@ exports.getProducts = async (req, res) => {
             {
                 $group: {
                     _id: '$Handle',
-                    Title: { $max: '$Title' },          // picks non-null value
+                    Title: { $max: '$Title' },
                     Handle: { $first: '$Handle' },
                     vendor: { $max: '$vendor' },
                     'Variant Price': { $max: '$Variant Price' },
@@ -56,8 +56,13 @@ exports.getProducts = async (req, res) => {
                     createdAt: { $first: '$createdAt' }
                 }
             },
-            // Remove any that still have bad data after grouping
-            { $match: { Title: { $ne: null, $ne: '' }, 'Variant Price': { $gt: 0 } } },
+            // Secondary filter after grouping — catch anything still bad
+            {
+                $match: {
+                    Title: { $nin: ['', null, 'undefined'] },
+                    'Variant Price': { $gt: 0 }
+                }
+            },
             { $sort: { createdAt: -1 } },
             { $skip: skipVal },
             { $limit: limit }
@@ -66,7 +71,7 @@ exports.getProducts = async (req, res) => {
         const countPipeline = [
             { $match: matchStage },
             { $group: { _id: '$Handle', Title: { $max: '$Title' }, price: { $max: '$Variant Price' } } },
-            { $match: { Title: { $ne: null, $ne: '' }, price: { $gt: 0 } } },
+            { $match: { Title: { $nin: ['', null, 'undefined'] }, price: { $gt: 0 } } },
             { $count: 'total' }
         ];
 
