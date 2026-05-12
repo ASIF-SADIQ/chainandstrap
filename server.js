@@ -15,19 +15,29 @@ app.use(cors());
 app.use(express.json());
 
 const { getStats, getProducts, getProductByHandle, getSettings, updateSettings, getLogs } = require('./controllers/productController');
+const { register, login, getMe, getAllUsers } = require('./controllers/authController');
+const { protect, adminOnly } = require('./middleware/authMiddleware');
 
 // Basic Route for testing
 app.get('/', (req, res) => {
     res.send('Chain and Straps API is running...');
 });
 
-// Admin Dashboard Routes
+// Auth Routes
+app.post('/api/auth/register', register);
+app.post('/api/auth/login', login);
+app.get('/api/auth/me', protect, getMe);
+
+// Product Routes
 app.get('/api/stats', getStats);
 app.get('/api/products', getProducts);
 app.get('/api/products/:handle', getProductByHandle);
 app.get('/api/settings', getSettings);
 app.post('/api/settings', updateSettings);
 app.get('/api/logs', getLogs);
+
+// Admin Users Route
+app.get('/api/admin/users', protect, adminOnly, getAllUsers);
 
 const PORT = process.env.PORT || 5000;
 
