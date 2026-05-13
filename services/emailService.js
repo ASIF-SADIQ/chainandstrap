@@ -1,27 +1,19 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,       // SSL
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Verify connection on startup
-transporter.verify((error) => {
-    if (error) {
-        console.error('❌ Email transporter error:', error.message);
-        console.error('   → Check EMAIL_USER and EMAIL_PASS in .env');
-    } else {
-        console.log('✅ Email transporter ready. Sending from:', process.env.EMAIL_USER);
-    }
-});
+const sendEmail = async ({ to, subject, html }) => {
+    const { data, error } = await resend.emails.send({
+        from: 'Chain & Straps <onboarding@resend.dev>',
+        to,
+        subject,
+        html
+    });
+    if (error) throw new Error(error.message);
+    return data;
+};
+
+console.log('✅ Email service ready (Resend API)');
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -270,8 +262,7 @@ const welcomeTemplate = (name) => emailWrapper(`
 
 // ─── Exported Send Functions ─────────────────────────────
 const sendVerificationEmail = async (toEmail, name, otp) => {
-    await transporter.sendMail({
-        from: `"Chain & Straps" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
         to: toEmail,
         subject: `${otp} is your Chain & Straps verification code`,
         html: verificationTemplate(name, otp)
@@ -279,8 +270,7 @@ const sendVerificationEmail = async (toEmail, name, otp) => {
 };
 
 const sendPasswordResetEmail = async (toEmail, name, otp) => {
-    await transporter.sendMail({
-        from: `"Chain & Straps Security" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
         to: toEmail,
         subject: `Password Reset Code: ${otp} — Chain & Straps`,
         html: passwordResetTemplate(name, otp)
@@ -288,8 +278,7 @@ const sendPasswordResetEmail = async (toEmail, name, otp) => {
 };
 
 const sendWelcomeEmail = async (toEmail, name) => {
-    await transporter.sendMail({
-        from: `"Chain & Straps" <${process.env.EMAIL_USER}>`,
+    await sendEmail({
         to: toEmail,
         subject: `Welcome to Chain & Straps, ${name} ✓`,
         html: welcomeTemplate(name)
