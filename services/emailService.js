@@ -3,8 +3,9 @@ const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async ({ to, subject, html }) => {
+    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <noreply@resend.dev>';
     const { data, error } = await resend.emails.send({
-        from: 'Chain & Straps <onboarding@resend.dev>',
+        from: fromAddress,
         to,
         subject,
         html

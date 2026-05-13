@@ -36,18 +36,27 @@ exports.register = async (req, res) => {
             await User.create({ name, email, password, phone, otp: hashedOtp, otpExpiry, isVerified: false });
         }
 
-        await sendVerificationEmail(email, name, otp);
+        let emailSent = true;
+        try {
+            await sendVerificationEmail(email, name, otp);
+        } catch (emailErr) {
+            console.error('⚠️  Email failed:', emailErr.message);
+            emailSent = false;
+        }
 
         res.status(201).json({
             success: true,
-            message: 'OTP sent to your email. Please verify to complete registration.',
-            email
+            message: emailSent
+                ? 'OTP sent to your email. Please verify to complete registration.'
+                : 'Account created! Email could not be sent — use this OTP to verify:',
+            email,
+            ...(emailSent ? {} : { otp }) // Only expose OTP if email failed
         });
     } catch (error) {
-        console.error('❌ Register/Email error:', error.message, error.stack);
+        console.error('❌ Register error:', error.message);
         res.status(500).json({
             success: false,
-            message: `Failed to send OTP: ${error.message}. Check EMAIL_USER and EMAIL_PASS in server .env`
+            message: error.message
         });
     }
 };
