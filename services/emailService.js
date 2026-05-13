@@ -1,8 +1,26 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,       // SSL
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+// Verify connection on startup
+transporter.verify((error) => {
+    if (error) {
+        console.error('❌ Email transporter error:', error.message);
+        console.error('   → Check EMAIL_USER and EMAIL_PASS in .env');
+    } else {
+        console.log('✅ Email transporter ready. Sending from:', process.env.EMAIL_USER);
+    }
 });
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();

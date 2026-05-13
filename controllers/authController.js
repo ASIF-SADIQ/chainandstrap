@@ -41,11 +41,14 @@ exports.register = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'OTP sent to your email. Please verify to complete registration.',
-            email // return so frontend can pre-fill verify screen
+            email
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Failed to send OTP. Check email config.' });
+        console.error('❌ Register/Email error:', error.message, error.stack);
+        res.status(500).json({
+            success: false,
+            message: `Failed to send OTP: ${error.message}. Check EMAIL_USER and EMAIL_PASS in server .env`
+        });
     }
 };
 
