@@ -54,9 +54,10 @@ exports.register = async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Register error:', error.message);
+        // If user was created but email failed, otp might exist — return it for fallback
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
     }
 };
