@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const { sendOrderConfirmationEmail } = require('../services/emailService');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -33,6 +34,24 @@ const addOrderItems = async (req, res) => {
 
         const createdOrder = await order.save();
         
+        // Try to send order confirmation email
+        try {
+            const customerName = shippingAddress.firstName || (req.user ? req.user.name : 'Customer');
+            const customerEmail = shippingAddress.email || (req.user ? req.user.email : null);
+            if (customerEmail) {
+                sendOrderConfirmationEmail(
+                    customerEmail, 
+                    customerName, 
+                    createdOrder._id.toString(), 
+                    orderItems, 
+                    totalAmount, 
+                    shippingAddress
+                ).catch(e => console.error("Async Email Error:", e.message));
+            }
+        } catch (emailErr) {
+            console.error('⚠️  Order email failed:', emailErr.message);
+        }
+
         res.status(201).json({ 
             success: true, 
             message: 'Order created successfully',
@@ -71,8 +90,43 @@ const getOrders = async (req, res) => {
     }
 };
 
+// @desc    Update order status
+// @route   PUT /api/orders/:id/status
+// @access  Private/Admin
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        order.status = status;
+        
+        // Update delivery/payment timestamps if needed based on status
+        if (status === 'Delivered' && !order.isDelivered) {
+            order.isDelivered = true;
+            order.deliveredAt = Date.now();
+        }
+
+        const updatedOrder = await order.save();
+        res.json({ success: true, order: updatedOrder });
+
+    } catch (error) {
+        console.error('❌ Update Order Status error:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update order status' });
+    }
+};
+
 module.exports = {
     addOrderItems,
     getMyOrders,
-    getOrders
+    getOrders,
+    updateOrderStatus
 };

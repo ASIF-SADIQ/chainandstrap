@@ -16,7 +16,8 @@ app.use(express.json());
 
 const { getStats, getProducts, getProductByHandle, getSettings, updateSettings, getLogs } = require('./controllers/productController');
 const { register, login, getMe, getAllUsers, verifyEmail, resendOtp, forgotPassword, resetPassword } = require('./controllers/authController');
-const { addOrderItems, getMyOrders, getOrders } = require('./controllers/orderController');
+const { addOrderItems, getMyOrders, getOrders, updateOrderStatus } = require('./controllers/orderController');
+const { getWishlist, toggleWishlist, syncWishlist } = require('./controllers/wishlistController');
 const { protect, adminOnly } = require('./middleware/authMiddleware');
 
 // Basic Route for testing
@@ -48,6 +49,12 @@ app.get('/api/admin/users', protect, adminOnly, getAllUsers);
 app.post('/api/orders', addOrderItems); // Supports both guest and logged in via controller
 app.get('/api/orders/myorders', protect, getMyOrders);
 app.get('/api/orders', protect, adminOnly, getOrders);
+app.put('/api/orders/:id/status', protect, adminOnly, updateOrderStatus);
+
+// Wishlist Routes
+app.get('/api/wishlist', protect, getWishlist);
+app.post('/api/wishlist/toggle', protect, toggleWishlist);
+app.post('/api/wishlist/sync', protect, syncWishlist);
 
 // One-time: Fix descriptions from CSV — call via browser
 app.get('/api/admin/fix-descriptions', async (req, res) => {

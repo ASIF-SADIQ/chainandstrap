@@ -261,6 +261,77 @@ const welcomeTemplate = (name) => emailWrapper(`
   </p>
 `);
 
+// ─── Template 4: Order Confirmation ─────────────────────
+const orderReceiptTemplate = (name, orderId, items, total, address) => {
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding:12px 0;border-bottom:1px solid #1e1e1e;">
+        <p style="margin:0;font-size:12px;color:#ffffff;">${item.title}</p>
+        <p style="margin:4px 0 0 0;font-size:10px;color:#888;">Qty: ${item.quantity}</p>
+      </td>
+      <td align="right" style="padding:12px 0;border-bottom:1px solid #1e1e1e;">
+        <p style="margin:0;font-size:12px;color:#c9a96e;">$${item.price.toFixed(2)}</p>
+      </td>
+    </tr>
+  `).join('');
+
+  return emailWrapper(`
+    <p style="margin:0 0 6px 0;font-size:12px;letter-spacing:0.3em;color:#c9a96e;text-transform:uppercase;">Order Confirmed</p>
+    <h2 style="margin:0 0 20px 0;font-family:'Georgia',serif;font-size:26px;font-weight:400;color:#ffffff;">Thank you for your purchase</h2>
+    <p style="margin:0 0 28px 0;font-size:14px;line-height:1.8;color:#888888;">
+      Hello <strong style="color:#ffffff;">${name || 'Valued Customer'}</strong>,<br/><br/>
+      We have received your order <strong style="color:#c9a96e;">#${orderId.substring(orderId.length - 8).toUpperCase()}</strong>. 
+      Your payment has been successfully processed via Credit Card, and your items are now being prepared for shipment.
+    </p>
+
+    <!-- Order Summary Box -->
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 auto 32px auto;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:24px;">
+      <tr>
+        <td colspan="2">
+          <p style="margin:0 0 16px 0;font-size:10px;letter-spacing:0.3em;color:#666;text-transform:uppercase;border-bottom:1px solid #2a2a2a;padding-bottom:12px;">Order Summary</p>
+        </td>
+      </tr>
+      ${itemsHtml}
+      <tr>
+        <td style="padding:16px 0 0 0;">
+          <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Shipping</p>
+        </td>
+        <td align="right" style="padding:16px 0 0 0;">
+          <p style="margin:0;font-size:12px;color:#c9a96e;">$15.00</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:16px 0 0 0;">
+          <p style="margin:0;font-size:14px;color:#ffffff;font-weight:bold;letter-spacing:0.1em;">Total Amount</p>
+        </td>
+        <td align="right" style="padding:16px 0 0 0;">
+          <p style="margin:0;font-size:16px;color:#c9a96e;font-weight:bold;">$${total.toFixed(2)}</p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Shipping Info -->
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 auto 32px auto;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:24px;">
+      <tr>
+        <td>
+          <p style="margin:0 0 16px 0;font-size:10px;letter-spacing:0.3em;color:#666;text-transform:uppercase;border-bottom:1px solid #2a2a2a;padding-bottom:12px;">Shipping Details</p>
+          <p style="margin:0 0 4px 0;font-size:12px;color:#ffffff;">${address.firstName} ${address.lastName}</p>
+          <p style="margin:0;font-size:12px;color:#888;line-height:1.6;">
+            ${address.address}<br/>
+            ${address.city}, ${address.zip}<br/>
+            ${address.country}
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;font-size:12px;color:#555555;text-align:center;line-height:1.6;">
+      You will receive another email with tracking information once your order has shipped.<br/>
+      If you have any questions, reply to this email or contact <a href="mailto:support@chainandstraps.com" style="color:#c9a96e;text-decoration:none;">support@chainandstraps.com</a>
+    </p>
+  `);
+};
+
 // ─── Exported Send Functions ─────────────────────────────
 const sendVerificationEmail = async (toEmail, name, otp) => {
     await sendEmail({
@@ -286,4 +357,12 @@ const sendWelcomeEmail = async (toEmail, name) => {
     });
 };
 
-module.exports = { generateOtp, sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail };
+const sendOrderConfirmationEmail = async (toEmail, name, orderId, items, total, address) => {
+    await sendEmail({
+        to: toEmail,
+        subject: `Order Confirmation #${orderId.substring(orderId.length - 8).toUpperCase()} — Chain & Straps`,
+        html: orderReceiptTemplate(name, orderId, items, total, address)
+    });
+};
+
+module.exports = { generateOtp, sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendOrderConfirmationEmail };

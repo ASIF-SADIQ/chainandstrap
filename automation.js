@@ -66,19 +66,30 @@ const runAutomationCycle = async () => {
             return;
         }
 
+        // Generate Rich Description with Hashtags
+        const vendorTag = product.vendor ? `#${product.vendor.replace(/\s+/g, '')}` : '';
+        const hashtags = `#LuxuryFashion #DesignerBags #OOTD #StyleInspo ${vendorTag} #ChainAndStraps`;
+        const formattedPrice = product['Variant Price'] ? ` | $${product['Variant Price']}` : '';
+        const description = `✨ ${product.Title}${formattedPrice}\n\nElevate your style with this premium piece from Chain & Straps. Click to shop now!\n\n${hashtags}`;
+
         // Pinterest API Logic
         const payload = {
             title: product.Title,
-            description: `Shop premium ${product.vendor} bags at Chain & Straps.`,
-            link: `https://chainandstraps.me/product/${product.Handle}`,
+            description: description,
+            link: `https://chainandstraps.com/product/${product.Handle}`,
             media_source: { source_type: "image_url", url: product['Image Src'] },
             board_id: activeAccount.board_id
         };
 
         try {
             console.log("⏳ Posting to Pinterest...");
-            // Uncomment the line below when real tokens are added
-            // await axios.post('https://api.pinterest.com/v5/pins', payload, { headers: { Authorization: `Bearer ${activeAccount.access_token}` }});
+            // Execute real API Call
+            await axios.post('https://api.pinterest.com/v5/pins', payload, { 
+                headers: { 
+                    'Authorization': `Bearer ${activeAccount.access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             
             // Mark as posted
             product.status = 'posted';
