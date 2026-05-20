@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
-const { sendOrderConfirmationEmail } = require('../services/emailService');
+const User = require('../models/User');
+const { sendOrderConfirmationEmail, sendAdminOrderNotification, sendOrderStatusUpdateEmail } = require('../services/emailService');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -34,19 +35,30 @@ const addOrderItems = async (req, res) => {
 
         const createdOrder = await order.save();
         
-        // Try to send order confirmation email
+        // Send customer confirmation + admin notification (both non-blocking)
         try {
             const customerName = shippingAddress.firstName || (req.user ? req.user.name : 'Customer');
             const customerEmail = shippingAddress.email || (req.user ? req.user.email : null);
             if (customerEmail) {
+                // 1. Customer gets order confirmation
                 sendOrderConfirmationEmail(
-                    customerEmail, 
-                    customerName, 
-                    createdOrder._id.toString(), 
-                    orderItems, 
-                    totalAmount, 
+                    customerEmail,
+                    customerName,
+                    createdOrder._id.toString(),
+                    orderItems,
+                    totalAmount,
                     shippingAddress
-                ).catch(e => console.error("Async Email Error:", e.message));
+                ).catch(e => console.error('Customer email error:', e.message));
+
+                // 2. Admin gets new order notification
+                sendAdminOrderNotification(
+                    createdOrder._id.toString(),
+                    customerName,
+                    customerEmail,
+                    orderItems,
+                    totalAmount,
+                    shippingAddress
+                ).catch(e => console.error('Admin notification error:', e.message));
             }
         } catch (emailErr) {
             console.error('⚠️  Order email failed:', emailErr.message);
@@ -116,6 +128,24 @@ const updateOrderStatus = async (req, res) => {
         }
 
         const updatedOrder = await order.save();
+
+        // Send status update email to customer (non-blocking)
+        try {
+            const populatedOrder = await Order.findById(updatedOrder._id).populate('user', 'name email');
+            const customerEmail = populatedOrder?.user?.email || populatedOrder?.shippingAddress?.email;
+            const customerName = populatedOrder?.user?.name || populatedOrder?.shippingAddress?.firstName || 'Customer';
+            if (customerEmail) {
+                sendOrderStatusUpdateEmail(
+                    customerEmail,
+                    customerName,
+                    updatedOrder._id.toString(),
+                    status
+                ).catch(e => console.error('Status email error:', e.message));
+            }
+        } catch (emailErr) {
+            console.error('⚠️  Status email failed:', emailErr.message);
+        }
+
         res.json({ success: true, order: updatedOrder });
 
     } catch (error) {

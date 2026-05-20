@@ -1,20 +1,36 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+
+let transporter;
+if (emailUser && emailPass) {
+    transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: emailUser,
+            pass: emailPass
+        }
+    });
+    console.log('✅ Email service ready (Nodemailer)');
+} else {
+    console.log('⚠️  Email service: EMAIL_USER or EMAIL_PASS missing. Emails will not be sent.');
+}
 
 const sendEmail = async ({ to, subject, html }) => {
-    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <noreply@resend.dev>';
-    const { data, error } = await resend.emails.send({
+    if (!transporter) {
+        console.log('📧 [Simulation] Email would have been sent to:', to, '| Subject:', subject);
+        return { simulated: true };
+    }
+    const fromAddress = `Chain & Straps <${emailUser}>`;
+    const info = await transporter.sendMail({
         from: fromAddress,
         to,
         subject,
         html
     });
-    if (error) throw new Error(error.message);
-    return data;
+    return info;
 };
-
-console.log('✅ Email service ready (Resend API)');
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -332,6 +348,113 @@ const orderReceiptTemplate = (name, orderId, items, total, address) => {
   `);
 };
 
+// ─── Template 5: Admin Order Notification ────────────────
+const adminOrderNotificationTemplate = (orderId, customerName, customerEmail, items, total, address) => {
+  const itemsHtml = items.map(item => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #1e1e1e;font-size:12px;color:#ffffff;">${item.title}</td>
+      <td align="center" style="padding:10px 0;border-bottom:1px solid #1e1e1e;font-size:12px;color:#888;">x${item.quantity}</td>
+      <td align="right" style="padding:10px 0;border-bottom:1px solid #1e1e1e;font-size:12px;color:#c9a96e;">$${item.price.toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  return emailWrapper(`
+    <p style="margin:0 0 6px 0;font-size:12px;letter-spacing:0.3em;color:#ff6b35;text-transform:uppercase;">🛍 New Order Received</p>
+    <h2 style="margin:0 0 20px 0;font-family:'Georgia',serif;font-size:26px;font-weight:400;color:#ffffff;">Order #${orderId.substring(orderId.length - 8).toUpperCase()}</h2>
+    
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:20px;">
+      <tr><td colspan="2"><p style="margin:0 0 12px 0;font-size:10px;letter-spacing:0.3em;color:#666;text-transform:uppercase;border-bottom:1px solid #2a2a2a;padding-bottom:10px;">Customer Info</p></td></tr>
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:#888;">Name:</td>
+        <td style="padding:6px 0;font-size:12px;color:#fff;">${customerName}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:#888;">Email:</td>
+        <td style="padding:6px 0;font-size:12px;color:#c9a96e;">${customerEmail}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:#888;">Phone:</td>
+        <td style="padding:6px 0;font-size:12px;color:#fff;">${address.phone || 'N/A'}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;font-size:12px;color:#888;">Address:</td>
+        <td style="padding:6px 0;font-size:12px;color:#fff;">${address.address}, ${address.city}, ${address.zip}, ${address.country}</td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:20px;">
+      <tr>
+        <td><p style="margin:0 0 12px 0;font-size:10px;letter-spacing:0.3em;color:#666;text-transform:uppercase;border-bottom:1px solid #2a2a2a;padding-bottom:10px;">Order Items</p></td>
+        <td align="center"><p style="margin:0 0 12px 0;font-size:10px;letter-spacing:0.2em;color:#666;text-transform:uppercase;border-bottom:1px solid #2a2a2a;padding-bottom:10px;">Qty</p></td>
+        <td align="right"><p style="margin:0 0 12px 0;font-size:10px;letter-spacing:0.2em;color:#666;text-transform:uppercase;border-bottom:1px solid #2a2a2a;padding-bottom:10px;">Price</p></td>
+      </tr>
+      ${itemsHtml}
+      <tr>
+        <td colspan="2" style="padding:14px 0 0 0;font-size:14px;color:#ffffff;font-weight:bold;">Total</td>
+        <td align="right" style="padding:14px 0 0 0;font-size:16px;color:#c9a96e;font-weight:bold;">$${total.toFixed(2)}</td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+      <tr>
+        <td style="background:#c9a96e;border-radius:2px;">
+          <a href="https://chainandstraps.com/admin" style="display:inline-block;padding:14px 36px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">View in Admin Panel</a>
+        </td>
+      </tr>
+    </table>
+  `);
+};
+
+// ─── Template 6: Order Status Update ─────────────────────
+const orderStatusUpdateTemplate = (name, orderId, status) => {
+  const statusColors = {
+    'Processing': '#f59e0b',
+    'Shipped': '#3b82f6',
+    'Delivered': '#10b981',
+    'Cancelled': '#ef4444',
+    'Pending': '#6b7280'
+  };
+  const statusColor = statusColors[status] || '#c9a96e';
+  const statusMessages = {
+    'Processing': 'Your order is being carefully prepared by our team.',
+    'Shipped': 'Great news! Your order is on its way to you.',
+    'Delivered': 'Your order has been delivered. We hope you love it!',
+    'Cancelled': 'Your order has been cancelled. Contact us if you have questions.',
+    'Pending': 'Your order is pending review.'
+  };
+  const statusMsg = statusMessages[status] || 'Your order status has been updated.';
+
+  return emailWrapper(`
+    <p style="margin:0 0 6px 0;font-size:12px;letter-spacing:0.3em;color:#c9a96e;text-transform:uppercase;">Order Update</p>
+    <h2 style="margin:0 0 20px 0;font-family:'Georgia',serif;font-size:26px;font-weight:400;color:#ffffff;">Your Order Status Changed</h2>
+    <p style="margin:0 0 28px 0;font-size:14px;line-height:1.8;color:#888888;">
+      Hello <strong style="color:#ffffff;">${name}</strong>,<br/><br/>
+      ${statusMsg}
+    </p>
+
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px auto;background:#141414;border:1px solid #2a2a2a;border-radius:6px;padding:24px 48px;">
+      <tr>
+        <td align="center">
+          <p style="margin:0 0 8px 0;font-size:10px;letter-spacing:0.3em;color:#666;text-transform:uppercase;">Order #${orderId.substring(orderId.length - 8).toUpperCase()}</p>
+          <p style="margin:0;font-size:22px;font-weight:bold;letter-spacing:0.2em;color:${statusColor};text-transform:uppercase;">${status}</p>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px auto;">
+      <tr>
+        <td style="background:#c9a96e;border-radius:2px;">
+          <a href="https://chainandstraps.com/account" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">View My Orders</a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;font-size:12px;color:#555555;text-align:center;">
+      Questions? Contact us at <a href="mailto:support@chainandstraps.com" style="color:#c9a96e;text-decoration:none;">support@chainandstraps.com</a>
+    </p>
+  `);
+};
+
 // ─── Exported Send Functions ─────────────────────────────
 const sendVerificationEmail = async (toEmail, name, otp) => {
     await sendEmail({
@@ -365,4 +488,29 @@ const sendOrderConfirmationEmail = async (toEmail, name, orderId, items, total, 
     });
 };
 
-module.exports = { generateOtp, sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendOrderConfirmationEmail };
+const sendAdminOrderNotification = async (orderId, customerName, customerEmail, items, total, address) => {
+    const adminEmail = process.env.ADMIN_EMAIL || 'chainandstrap@gmail.com';
+    await sendEmail({
+        to: adminEmail,
+        subject: `🛍 New Order #${orderId.substring(orderId.length - 8).toUpperCase()} — $${total.toFixed(2)} — Chain & Straps`,
+        html: adminOrderNotificationTemplate(orderId, customerName, customerEmail, items, total, address)
+    });
+};
+
+const sendOrderStatusUpdateEmail = async (toEmail, name, orderId, status) => {
+    await sendEmail({
+        to: toEmail,
+        subject: `Your Order #${orderId.substring(orderId.length - 8).toUpperCase()} is now ${status} — Chain & Straps`,
+        html: orderStatusUpdateTemplate(name, orderId, status)
+    });
+};
+
+module.exports = {
+    generateOtp,
+    sendVerificationEmail,
+    sendPasswordResetEmail,
+    sendWelcomeEmail,
+    sendOrderConfirmationEmail,
+    sendAdminOrderNotification,
+    sendOrderStatusUpdateEmail
+};

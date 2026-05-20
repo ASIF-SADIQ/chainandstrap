@@ -14,10 +14,13 @@ app.use(cors());
 // Middleware for parsing JSON
 app.use(express.json());
 
+
+
 const { getStats, getProducts, getProductByHandle, getSettings, updateSettings, getLogs } = require('./controllers/productController');
 const { register, login, getMe, getAllUsers, verifyEmail, resendOtp, forgotPassword, resetPassword } = require('./controllers/authController');
 const { addOrderItems, getMyOrders, getOrders, updateOrderStatus } = require('./controllers/orderController');
 const { getWishlist, toggleWishlist, syncWishlist } = require('./controllers/wishlistController');
+const catalogRoutes = require('./routes/catalogRoutes');
 const { protect, adminOnly } = require('./middleware/authMiddleware');
 
 // Basic Route for testing
@@ -41,6 +44,9 @@ app.get('/api/products/:handle', getProductByHandle);
 app.get('/api/settings', getSettings);
 app.post('/api/settings', updateSettings);
 app.get('/api/logs', getLogs);
+
+// Catalog Route
+app.use('/api', catalogRoutes);
 
 // Admin Users Route
 app.get('/api/admin/users', protect, adminOnly, getAllUsers);
