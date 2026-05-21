@@ -15,7 +15,10 @@ const sendEmail = async ({ to, subject, html }) => {
         console.log('📧 [Simulation] Email would have been sent to:', to, '| Subject:', subject);
         return { simulated: true };
     }
-    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <onboarding@resend.dev>';
+    
+    // We force the verified domain here to prevent fallback to onboarding@resend.dev
+    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <orders@chainandstraps.live>';
+    
     const { data, error } = await resend.emails.send({
         from: fromAddress,
         to,
