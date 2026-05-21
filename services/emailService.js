@@ -1,35 +1,29 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const emailUser = process.env.EMAIL_USER;
-const emailPass = process.env.EMAIL_PASS;
+const resendKey = process.env.RESEND_API_KEY;
+let resend;
 
-let transporter;
-if (emailUser && emailPass) {
-    transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: emailUser,
-            pass: emailPass
-        }
-    });
-    console.log('✅ Email service ready (Nodemailer)');
+if (resendKey) {
+    resend = new Resend(resendKey);
+    console.log('✅ Email service ready (Resend API)');
 } else {
-    console.log('⚠️  Email service: EMAIL_USER or EMAIL_PASS missing. Emails will not be sent.');
+    console.log('⚠️  Email service: RESEND_API_KEY missing. Emails will not be sent.');
 }
 
 const sendEmail = async ({ to, subject, html }) => {
-    if (!transporter) {
+    if (!resend) {
         console.log('📧 [Simulation] Email would have been sent to:', to, '| Subject:', subject);
         return { simulated: true };
     }
-    const fromAddress = `Chain & Straps <${emailUser}>`;
-    const info = await transporter.sendMail({
+    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <onboarding@resend.dev>';
+    const { data, error } = await resend.emails.send({
         from: fromAddress,
         to,
         subject,
         html
     });
-    return info;
+    if (error) throw new Error(error.message);
+    return data;
 };
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
