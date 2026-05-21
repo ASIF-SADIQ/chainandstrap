@@ -40,25 +40,35 @@ const addOrderItems = async (req, res) => {
             const customerName = shippingAddress.firstName || (req.user ? req.user.name : 'Customer');
             const customerEmail = shippingAddress.email || (req.user ? req.user.email : null);
             if (customerEmail) {
-                // 1. Customer gets order confirmation
-                sendOrderConfirmationEmail(
-                    customerEmail,
-                    customerName,
-                    createdOrder._id.toString(),
-                    orderItems,
-                    totalAmount,
-                    shippingAddress
-                ).catch(e => console.error('Customer email error:', e.message));
+                // 1. Customer gets order confirmation (Sequential)
+                try {
+                    await sendOrderConfirmationEmail(
+                        customerEmail,
+                        customerName,
+                        createdOrder._id.toString(),
+                        orderItems,
+                        totalAmount,
+                        shippingAddress
+                    );
+                    console.log(`✅ Order confirmation sent to customer: ${customerEmail}`);
+                } catch(e) {
+                    console.error('Customer email error:', e.message);
+                }
 
                 // 2. Admin gets new order notification
-                sendAdminOrderNotification(
-                    createdOrder._id.toString(),
-                    customerName,
-                    customerEmail,
-                    orderItems,
-                    totalAmount,
-                    shippingAddress
-                ).catch(e => console.error('Admin notification error:', e.message));
+                try {
+                    await sendAdminOrderNotification(
+                        createdOrder._id.toString(),
+                        customerName,
+                        customerEmail,
+                        orderItems,
+                        totalAmount,
+                        shippingAddress
+                    );
+                    console.log(`✅ Order alert sent to admin for order ${createdOrder._id.toString()}`);
+                } catch(e) {
+                    console.error('Admin email error:', e.message);
+                }
             }
         } catch (emailErr) {
             console.error('⚠️  Order email failed:', emailErr.message);
