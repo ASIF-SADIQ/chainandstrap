@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-fetch('https://chainandstraps.live')
+fetch('https://chainandstrap.com')
   .then(res => res.text())
   .then(html => {
     console.log('HTML LENGTH:', html.length);

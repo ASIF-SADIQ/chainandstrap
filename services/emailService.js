@@ -17,7 +17,7 @@ const sendEmail = async ({ to, subject, html }) => {
     }
     
     // We force the verified domain here to prevent fallback to onboarding@resend.dev
-    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <orders@chainandstraps.live>';
+    const fromAddress = process.env.RESEND_FROM || 'Chain & Straps <orders@chainandstrap.com>';
     
     const { data, error } = await resend.emails.send({
         from: fromAddress,
@@ -79,14 +79,14 @@ const emailWrapper = (content) => `
             <p style="margin:0 0 16px 0;font-size:11px;color:#555555;letter-spacing:0.1em;">The World's Finest Luxury Accessories</p>
             <!-- Social Links -->
             <p style="margin:0 0 16px 0;">
-              <a href="https://pinterest.com/chainandstraps" style="color:#c9a96e;text-decoration:none;font-size:11px;letter-spacing:0.15em;margin:0 12px;">PINTEREST</a>
+              <a href="https://pinterest.com/chainandstrap" style="color:#c9a96e;text-decoration:none;font-size:11px;letter-spacing:0.15em;margin:0 12px;">PINTEREST</a>
               <span style="color:#333;">|</span>
-              <a href="https://chainandstraps.com" style="color:#c9a96e;text-decoration:none;font-size:11px;letter-spacing:0.15em;margin:0 12px;">SHOP NOW</a>
+              <a href="https://chainandstrap.com" style="color:#c9a96e;text-decoration:none;font-size:11px;letter-spacing:0.15em;margin:0 12px;">SHOP NOW</a>
               <span style="color:#333;">|</span>
-              <a href="https://chainandstraps.com/all" style="color:#c9a96e;text-decoration:none;font-size:11px;letter-spacing:0.15em;margin:0 12px;">COLLECTIONS</a>
+              <a href="https://chainandstrap.com/all" style="color:#c9a96e;text-decoration:none;font-size:11px;letter-spacing:0.15em;margin:0 12px;">COLLECTIONS</a>
             </p>
             <p style="margin:0;font-size:10px;color:#3a3a3a;letter-spacing:0.05em;">© ${new Date().getFullYear()} Chain &amp; Straps. All rights reserved.</p>
-            <p style="margin:6px 0 0 0;font-size:10px;color:#2e2e2e;">You received this email because you created an account at chainandstraps.com</p>
+            <p style="margin:6px 0 0 0;font-size:10px;color:#2e2e2e;">You received this email because you created an account at chainandstrap.com</p>
           </td>
         </tr>
 
@@ -126,7 +126,7 @@ const verificationTemplate = (name, otp) => emailWrapper(`
   <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px auto;">
     <tr>
       <td style="background:#c9a96e;border-radius:2px;padding:0;">
-        <a href="https://chainandstraps.com/verify-email" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">Verify My Account</a>
+        <a href="https://chainandstrap.com/verify-email" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">Verify My Account</a>
       </td>
     </tr>
   </table>
@@ -182,7 +182,7 @@ const passwordResetTemplate = (name, otp) => emailWrapper(`
   <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px auto;">
     <tr>
       <td style="background:#c9a96e;border-radius:2px;">
-        <a href="https://chainandstraps.com/reset-password" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">Reset My Password</a>
+        <a href="https://chainandstrap.com/reset-password" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">Reset My Password</a>
       </td>
     </tr>
   </table>
@@ -194,7 +194,7 @@ const passwordResetTemplate = (name, otp) => emailWrapper(`
         <p style="margin:0 0 4px 0;font-size:11px;color:#ff6b6b;letter-spacing:0.2em;text-transform:uppercase;font-weight:bold;">⚠ Security Notice</p>
         <p style="margin:0;font-size:12px;color:#883333;line-height:1.6;">
           If you didn't request a password reset, your account may be at risk. 
-          <a href="https://chainandstraps.com/login" style="color:#c9a96e;">Secure your account immediately.</a>
+          <a href="https://chainandstrap.com/login" style="color:#c9a96e;">Secure your account immediately.</a>
         </p>
       </td>
     </tr>
@@ -202,7 +202,7 @@ const passwordResetTemplate = (name, otp) => emailWrapper(`
 
   <p style="margin:0;font-size:11px;color:#3d3d3d;text-align:center;">
     For your security, this link expires in 10 minutes and can only be used once.<br/>
-    Chain &amp; Straps Support — support@chainandstraps.com
+    Chain &amp; Straps Support — support@chainandstrap.com
   </p>
 `);
 
@@ -220,7 +220,7 @@ const welcomeTemplate = (name) => emailWrapper(`
   <table cellpadding="0" cellspacing="0" style="margin:0 auto 40px auto;">
     <tr>
       <td style="background:#c9a96e;border-radius:2px;margin-right:12px;">
-        <a href="https://chainandstraps.com/all" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">Explore Collections</a>
+        <a href="https://chainandstrap.com/all" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">Explore Collections</a>
       </td>
     </tr>
   </table>
@@ -270,7 +270,7 @@ const welcomeTemplate = (name) => emailWrapper(`
   </table>
 
   <p style="margin:0;font-size:12px;color:#555555;text-align:center;line-height:1.6;">
-    Questions? We're here for you at <a href="mailto:support@chainandstraps.com" style="color:#c9a96e;text-decoration:none;">support@chainandstraps.com</a>
+    Questions? We're here for you at <a href="mailto:support@chainandstrap.com" style="color:#c9a96e;text-decoration:none;">support@chainandstrap.com</a>
   </p>
 `);
 
@@ -340,7 +340,7 @@ const orderReceiptTemplate = (name, orderId, items, total, address) => {
 
     <p style="margin:0;font-size:12px;color:#555555;text-align:center;line-height:1.6;">
       You will receive another email with tracking information once your order has shipped.<br/>
-      If you have any questions, reply to this email or contact <a href="mailto:support@chainandstraps.com" style="color:#c9a96e;text-decoration:none;">support@chainandstraps.com</a>
+      If you have any questions, reply to this email or contact <a href="mailto:support@chainandstrap.com" style="color:#c9a96e;text-decoration:none;">support@chainandstrap.com</a>
     </p>
   `);
 };
@@ -395,7 +395,7 @@ const adminOrderNotificationTemplate = (orderId, customerName, customerEmail, it
     <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
       <tr>
         <td style="background:#c9a96e;border-radius:2px;">
-          <a href="https://chainandstraps.com/admin" style="display:inline-block;padding:14px 36px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">View in Admin Panel</a>
+          <a href="https://chainandstrap.com/admin" style="display:inline-block;padding:14px 36px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">View in Admin Panel</a>
         </td>
       </tr>
     </table>
@@ -441,13 +441,13 @@ const orderStatusUpdateTemplate = (name, orderId, status) => {
     <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px auto;">
       <tr>
         <td style="background:#c9a96e;border-radius:2px;">
-          <a href="https://chainandstraps.com/account" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">View My Orders</a>
+          <a href="https://chainandstrap.com/account" style="display:inline-block;padding:16px 40px;font-size:11px;font-weight:bold;letter-spacing:0.3em;color:#0d0d0d;text-decoration:none;text-transform:uppercase;">View My Orders</a>
         </td>
       </tr>
     </table>
 
     <p style="margin:0;font-size:12px;color:#555555;text-align:center;">
-      Questions? Contact us at <a href="mailto:support@chainandstraps.com" style="color:#c9a96e;text-decoration:none;">support@chainandstraps.com</a>
+      Questions? Contact us at <a href="mailto:support@chainandstrap.com" style="color:#c9a96e;text-decoration:none;">support@chainandstrap.com</a>
     </p>
   `);
 };

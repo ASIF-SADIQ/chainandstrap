@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 console.log('Fetching from HTTPS domain...');
-fetch('https://chainandstraps.live/backend-api/products?limit=2')
+fetch('https://chainandstrap.com/backend-api/products?limit=2')
   .then(res => {
     console.log('STATUS:', res.status);
     return res.text();

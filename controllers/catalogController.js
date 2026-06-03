@@ -13,7 +13,8 @@ exports.generatePinterestCatalog = async (req, res) => {
         // Only fetch products with a valid title and price
         const cursor = Product.find({
             Title: { $nin: ['', null, 'undefined'] },
-            'Variant Price': { $gt: 0 }
+            'Variant Price': { $gt: 0 },
+            isDeleted: { $ne: true }
         }).cursor();
 
         for await (const product of cursor) {
@@ -31,10 +32,10 @@ exports.generatePinterestCatalog = async (req, res) => {
             const description = escapeCSV(product['Body (HTML)'] || product.Title);
             
             // Product Link
-            const link = escapeCSV(`https://chainandstraps.live/product/${product.Handle || product._id}`);
+            const link = escapeCSV(`https://chainandstrap.com/product/${product.Handle || product._id}`);
             
             // Image Link
-            const image_link = escapeCSV(product['Image Src'] || 'https://chainandstraps.live/placeholder.png');
+            const image_link = escapeCSV(product['Image Src'] || 'https://chainandstrap.com/placeholder.png');
             
             // Price format for Pinterest: "285.04 USD"
             const price = escapeCSV(`${product['Variant Price']} USD`);

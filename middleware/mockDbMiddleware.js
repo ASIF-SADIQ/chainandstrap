@@ -274,7 +274,7 @@ module.exports = async function mockDbMiddleware(req, res, next) {
         }
 
         // Support both email accounts
-        const isCorrectEmail = email === 'chainandstrap@gmail.com' || email === 'admin@chainstraps.com';
+        const isCorrectEmail = email === 'chainandstrap@gmail.com' || email === 'admin@chainandstrap.com';
         const isCorrectPassword = password === 'Admin@1234';
 
         if (isCorrectEmail && isCorrectPassword) {

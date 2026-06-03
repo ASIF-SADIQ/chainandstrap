@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-fetch('https://chainandstraps.live/backend-api/products?limit=5')
+fetch('https://chainandstrap.com/backend-api/products?limit=5')
   .then(res => res.json())
   .then(json => {
     console.log('LIVE PRODUCTS IMAGE URLS:');

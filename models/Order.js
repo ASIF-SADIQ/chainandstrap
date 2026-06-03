@@ -18,14 +18,30 @@ const OrderSchema = new mongoose.Schema({
         }
     }],
     shippingAddress: {
-        firstName: { type: String, required: true },
-        lastName: { type: String, required: true },
+        firstName: { 
+            type: String, 
+            required: true,
+            match: [/^[A-Za-z\s]+$/, 'First Name can only contain alphabets and spaces']
+        },
+        lastName: { 
+            type: String, 
+            required: true,
+            match: [/^[A-Za-z\s]+$/, 'Last Name can only contain alphabets and spaces']
+        },
         address: { type: String, required: true },
         city: { type: String, required: true },
         zip: { type: String, required: true },
         country: { type: String, required: true },
-        email: { type: String, required: true },
-        phone: { type: String, required: false },
+        email: { 
+            type: String, 
+            required: true,
+            match: [/^\S+@\S+\.\S+$/, 'Please use a valid email address']
+        },
+        phone: { 
+            type: String, 
+            required: false,
+            match: [/^\+?[0-9\s]*$/, 'Phone number can only contain digits, spaces, and an optional + sign']
+        },
     },
     paymentMethod: { type: String, default: 'Credit Card' },
     itemsPrice: { type: Number, required: true, default: 0.0 },

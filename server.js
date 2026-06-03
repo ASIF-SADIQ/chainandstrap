@@ -1,22 +1,50 @@
 require('dotenv').config(); // Load environment variables
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db'); // Import connection script
 
 const app = express();
 
-// Connect to MongoDB
+// 1. HTTP Security Headers
+app.use(helmet());
+
+// 2. Prevent NoSQL Injection
+app.use(mongoSanitize());
+
+// 3. Connect to MongoDB
 connectDB();
 
-// CORS - Allow frontend to access this API
-app.use(cors());
+// 4. Rate Limiting (General API)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // 100 requests per 15 minutes per IP
+    message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' }
+});
+app.use('/api/', apiLimiter);
+
+// 5. Strict CORS Configuration
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://chainandstrap.com', 'https://www.chainandstrap.com'];
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps, curl, or server-to-server)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 
 // Middleware for parsing JSON
 app.use(express.json());
 
 
 
-const { getStats, getProducts, getProductByHandle, getSettings, updateSettings, getLogs } = require('./controllers/productController');
+const { getStats, getProducts, getProductByHandle, getSettings, updateSettings, getLogs, deleteProduct, restoreProduct } = require('./controllers/productController');
 const { register, login, getMe, getAllUsers, verifyEmail, resendOtp, forgotPassword, resetPassword } = require('./controllers/authController');
 const { addOrderItems, getMyOrders, getOrders, updateOrderStatus } = require('./controllers/orderController');
 const { getWishlist, toggleWishlist, syncWishlist } = require('./controllers/wishlistController');
@@ -44,6 +72,8 @@ app.get('/api/products/:handle', getProductByHandle);
 app.get('/api/settings', getSettings);
 app.post('/api/settings', updateSettings);
 app.get('/api/logs', getLogs);
+app.delete('/api/products/:id', protect, adminOnly, deleteProduct);
+app.put('/api/products/:id/restore', protect, adminOnly, restoreProduct);
 
 // Catalog Route
 app.use('/api', catalogRoutes);

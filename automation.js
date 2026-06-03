@@ -68,7 +68,7 @@ const runAutomationCycle = async () => {
 
         // Generate Rich Description with Hashtags
         const vendorTag = product.vendor ? `#${product.vendor.replace(/\s+/g, '')}` : '';
-        const hashtags = `#LuxuryFashion #DesignerBags #OOTD #StyleInspo ${vendorTag} #ChainAndStraps`;
+        const hashtags = `#LuxuryFashion #DesignerBags #OOTD #StyleInspo ${vendorTag} #ChainAndStrap`;
         const formattedPrice = product['Variant Price'] ? ` | $${product['Variant Price']}` : '';
         const description = `✨ ${product.Title}${formattedPrice}\n\nElevate your style with this premium piece from Chain & Straps. Click to shop now!\n\n${hashtags}`;
 
@@ -76,7 +76,7 @@ const runAutomationCycle = async () => {
         const payload = {
             title: product.Title,
             description: description,
-            link: `https://chainandstraps.com/product/${product.Handle}`,
+            link: `https://chainandstrap.com/product/${product.Handle}`,
             media_source: { source_type: "image_url", url: product['Image Src'] },
             board_id: activeAccount.board_id
         };

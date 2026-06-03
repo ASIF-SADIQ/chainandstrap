@@ -7,9 +7,9 @@ exports.getStats = async (req, res) => {
     try {
         // Hum parallel queries chalayenge taake time bache (Promise.all)
         const [total, pending, posted] = await Promise.all([
-            Product.countDocuments(),
-            Product.countDocuments({ status: 'pending' }),
-            Product.countDocuments({ status: 'posted' })
+            Product.countDocuments({ isDeleted: { $ne: true } }),
+            Product.countDocuments({ status: 'pending', isDeleted: { $ne: true } }),
+            Product.countDocuments({ status: 'posted', isDeleted: { $ne: true } })
         ]);
 
         res.status(200).json({
@@ -33,7 +33,8 @@ exports.getProducts = async (req, res) => {
         // Only match rows with a real non-empty Title AND valid price > 0
         const matchStage = {
             Title: { $exists: true, $nin: ['', null, 'undefined'] },
-            'Variant Price': { $exists: true, $gt: 0 }
+            'Variant Price': { $exists: true, $gt: 0 },
+            isDeleted: { $ne: true }
         };
 
         if (search) {
@@ -191,7 +192,7 @@ exports.getProductByHandle = async (req, res) => {
         const { handle } = req.params;
 
         const pipeline = [
-            { $match: { Handle: handle } },
+            { $match: { Handle: handle, isDeleted: { $ne: true } } },
             {
                 $group: {
                     _id: '$Handle',
@@ -253,6 +254,28 @@ exports.getLogs = async (req, res) => {
     try {
         const logs = await Log.find().sort({ createdAt: -1 }).limit(50);
         res.status(200).json({ success: true, logs });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 5. Soft Delete API
+exports.deleteProduct = async (req, res) => {
+    try {
+        const product = await Product.findByIdAndUpdate(req.params.id, { isDeleted: true }, { new: true });
+        if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+        res.status(200).json({ success: true, message: 'Product soft deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 6. Restore Soft Deleted Product API
+exports.restoreProduct = async (req, res) => {
+    try {
+        const product = await Product.findByIdAndUpdate(req.params.id, { isDeleted: false }, { new: true });
+        if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+        res.status(200).json({ success: true, message: 'Product restored successfully' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
