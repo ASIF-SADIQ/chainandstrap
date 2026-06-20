@@ -1,0 +1,12 @@
+[
+  {
+    "username": "brand_account_1",
+    "access_token": "YOUR_TOKEN_1",
+    "board_id": "YOUR_BOARD_ID_1"
+  },
+  {
+    "username": "brand_account_2",
+    "access_token": "YOUR_TOKEN_2",
+    "board_id": "YOUR_BOARD_ID_2"
+  }
+]

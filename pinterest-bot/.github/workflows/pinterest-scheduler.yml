@@ -1,0 +1,32 @@
+name: Pinterest Automatic Bot
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Har 10 minute baad background mein trigger hoga
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Google Chrome (For Puppeteer)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Install Project Dependencies
+      run: |
+        npm install
+
+    - name: Execute Pinterest Bot
+      env:
+        MONGODB_URI: ${{ secrets.MONGODB_URI }} # GitHub Secrets Se Secure Link Uthaye Ga
+      run: node bot.js

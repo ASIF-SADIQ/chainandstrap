@@ -1,0 +1,70 @@
+[
+  {
+    "_id": "order_001_mock",
+    "orderNumber": 1001,
+    "user": {
+      "name": "Ayesha Khan",
+      "email": "ayesha.khan@example.com"
+    },
+    "shippingAddress": {
+      "firstName": "Ayesha",
+      "lastName": "Khan",
+      "email": "ayesha.khan@example.com",
+      "phone": "+92 300 1234567",
+      "address": "Flat 4B, Silver Oak Apartments, F-10 Markaz",
+      "city": "Islamabad",
+      "zip": "44000",
+      "country": "Pakistan"
+    },
+    "orderItems": [
+      {
+        "product": "dragons-bags-horse-brown-tote-bag",
+        "title": "Horse brown tote bag",
+        "price": 269.51,
+        "quantity": 1,
+        "image": "https://cdn.shopify.com/s/files/1/0555/1000/7999/files/dragons-bags-horse-brown-tote-bag-front.jpg"
+      }
+    ],
+    "itemsPrice": 269.51,
+    "shippingPrice": 0,
+    "totalAmount": 269.51,
+    "status": "Delivered",
+    "isDelivered": true,
+    "createdAt": "2026-05-17T19:44:45.220Z",
+    "deliveredAt": "2026-05-17T21:45:30.984Z"
+  },
+  {
+    "_id": "order_002_mock",
+    "orderNumber": 1002,
+    "user": {
+      "name": "Zainab Malik",
+      "email": "zainab.malik@example.com"
+    },
+    "shippingAddress": {
+      "firstName": "Zainab",
+      "lastName": "Malik",
+      "email": "zainab.malik@example.com",
+      "phone": "+92 321 9876543",
+      "address": "House 12, Street 3, Phase 5, DHA",
+      "city": "Lahore",
+      "zip": "54000",
+      "country": "Pakistan"
+    },
+    "orderItems": [
+      {
+        "product": "off-white-elongated-chain-handle-purse",
+        "title": "Off-white elongated chain handle purse",
+        "price": 292.89,
+        "quantity": 2,
+        "image": "https://cdn.shopify.com/s/files/1/0555/1000/7999/files/off-white-elongated-chain-handle-purse-quater.jpg"
+      }
+    ],
+    "itemsPrice": 585.78,
+    "shippingPrice": 0,
+    "totalAmount": 585.78,
+    "status": "Delivered",
+    "isDelivered": true,
+    "deliveredAt": "2026-05-17T21:44:45.220Z",
+    "createdAt": "2026-05-16T21:44:45.220Z"
+  }
+]
