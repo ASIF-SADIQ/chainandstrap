@@ -8,6 +8,9 @@ const connectDB = require('./config/db'); // Import connection script
 
 const app = express();
 
+// Trust proxy to read X-Forwarded-For header from Nginx/Next.js
+app.set('trust proxy', 1);
+
 // 1. HTTP Security Headers
 app.use(helmet());
 
@@ -20,7 +23,8 @@ connectDB();
 // 4. Rate Limiting (General API)
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per 15 minutes per IP
+    max: 2000, // 2000 requests per 15 minutes per IP
+    skip: (req, res) => req.method === 'GET', // skip rate limiting for GET requests (like browsing products)
     message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' }
 });
 app.use('/api/', apiLimiter);
