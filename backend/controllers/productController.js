@@ -1046,78 +1046,126 @@ exports.exportPinterestCSV = async (req, res) => {
     }
 };
 
+// Caching layer for Sitemap
+let cachedSitemapXml = null;
+let lastSitemapGenTime = 0;
+let isGeneratingSitemap = false;
+const SITEMAP_CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours cache duration
+
+// Helper function to build sitemap XML
+async function generateSitemapXml() {
+    // Only get active/non-deleted products with a valid Handle
+    const products = await Product.find(
+        { isDeleted: { $ne: true }, Handle: { $exists: true, $ne: '' } },
+        'Handle createdAt'
+    ).lean();
+
+    const brands = ['louis-vuitton', 'chanel', 'hermes', 'gucci', 'prada', 'dior'];
+    const categories = ['bags', 'shoes', 'watches'];
+    const policies = ['about', 'contact', 'faq', 'privacy-policy', 'shipping-policy', 'refund-policy', 'terms'];
+
+    const baseUrl = 'https://chainandstrap.store';
+
+    // 1. Core pages
+    const urls = [
+        { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
+        { loc: `${baseUrl}/all`, priority: '0.9', changefreq: 'daily' }
+    ];
+
+    // 2. Policies/Static pages
+    policies.forEach(p => {
+        urls.push({ loc: `${baseUrl}/${p}`, priority: '0.6', changefreq: 'monthly' });
+    });
+
+    // 3. Brands
+    brands.forEach(b => {
+        urls.push({ loc: `${baseUrl}/brand/${b}`, priority: '0.8', changefreq: 'daily' });
+    });
+
+    // 4. Categories
+    categories.forEach(c => {
+        urls.push({ loc: `${baseUrl}/category/${c}`, priority: '0.8', changefreq: 'daily' });
+    });
+
+    // 5. Products
+    products.forEach(p => {
+        // Use createdAt as lastmod if present, fallback to current time
+        const lastmod = p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString();
+        urls.push({
+            loc: `${baseUrl}/product/${p.Handle}`,
+            priority: '0.7',
+            changefreq: 'weekly',
+            lastmod
+        });
+    });
+
+    // Generate XML string with professional formatting
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    for (const u of urls) {
+        xml += `  <url>\n`;
+        xml += `    <loc>${u.loc}</loc>\n`;
+        xml += `    <changefreq>${u.changefreq}</changefreq>\n`;
+        xml += `    <priority>${u.priority}</priority>\n`;
+        if (u.lastmod) {
+            xml += `    <lastmod>${u.lastmod}</lastmod>\n`;
+        }
+        xml += `  </url>\n`;
+    }
+
+    xml += `</urlset>`;
+    return xml;
+}
+
 // GET /sitemap.xml
 exports.getSitemap = async (req, res) => {
     try {
-        // Only get active/non-deleted products with a valid Handle
-        const products = await Product.find(
-            { isDeleted: { $ne: true }, Handle: { $exists: true, $ne: '' } },
-            'Handle createdAt'
-        ).lean();
-
-        const brands = ['louis-vuitton', 'chanel', 'hermes', 'gucci', 'prada', 'dior'];
-        const categories = ['bags', 'shoes', 'watches'];
-        const policies = ['about', 'contact', 'faq', 'privacy-policy', 'shipping-policy', 'refund-policy', 'terms'];
-
-        const baseUrl = 'https://chainandstrap.store';
-
-        // 1. Core pages
-        const urls = [
-            { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
-            { loc: `${baseUrl}/all`, priority: '0.9', changefreq: 'daily' }
-        ];
-
-        // 2. Policies/Static pages
-        policies.forEach(p => {
-            urls.push({ loc: `${baseUrl}/${p}`, priority: '0.6', changefreq: 'monthly' });
-        });
-
-        // 3. Brands
-        brands.forEach(b => {
-            urls.push({ loc: `${baseUrl}/brand/${b}`, priority: '0.8', changefreq: 'daily' });
-        });
-
-        // 4. Categories
-        categories.forEach(c => {
-            urls.push({ loc: `${baseUrl}/category/${c}`, priority: '0.8', changefreq: 'daily' });
-        });
-
-        // 5. Products
-        products.forEach(p => {
-            // Use createdAt as lastmod if present, fallback to current time
-            const lastmod = p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString();
-            urls.push({
-                loc: `${baseUrl}/product/${p.Handle}`,
-                priority: '0.7',
-                changefreq: 'weekly',
-                lastmod
-            });
-        });
-
-        // Generate XML string with professional formatting
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-
-        for (const u of urls) {
-            xml += `  <url>\n`;
-            xml += `    <loc>${u.loc}</loc>\n`;
-            xml += `    <changefreq>${u.changefreq}</changefreq>\n`;
-            xml += `    <priority>${u.priority}</priority>\n`;
-            if (u.lastmod) {
-                xml += `    <lastmod>${u.lastmod}</lastmod>\n`;
-            }
-            xml += `  </url>\n`;
+        const now = Date.now();
+        
+        // If we have a cached version and it is still fresh (within 12 hours)
+        if (cachedSitemapXml && (now - lastSitemapGenTime < SITEMAP_CACHE_DURATION)) {
+            res.header('Content-Type', 'application/xml; charset=utf-8');
+            res.header('Cache-Control', 'public, max-age=86400');
+            return res.status(200).send(cachedSitemapXml);
         }
 
-        xml += `</urlset>`;
+        // If cache is expired, but we have a cache - return stale cache instantly and regenerate in background
+        if (cachedSitemapXml && !isGeneratingSitemap) {
+            isGeneratingSitemap = true;
+            // Background generation
+            generateSitemapXml()
+                .then(xml => {
+                    cachedSitemapXml = xml;
+                    lastSitemapGenTime = Date.now();
+                    isGeneratingSitemap = false;
+                    console.log('Sitemap cache successfully regenerated in background');
+                })
+                .catch(err => {
+                    console.error('Error generating sitemap in background:', err);
+                    isGeneratingSitemap = false;
+                });
+
+            res.header('Content-Type', 'application/xml; charset=utf-8');
+            res.header('Cache-Control', 'public, max-age=86400');
+            return res.status(200).send(cachedSitemapXml);
+        }
+
+        // Otherwise (first request or cache is generating), generate synchronously
+        isGeneratingSitemap = true;
+        const xml = await generateSitemapXml();
+        cachedSitemapXml = xml;
+        lastSitemapGenTime = Date.now();
+        isGeneratingSitemap = false;
 
         res.header('Content-Type', 'application/xml; charset=utf-8');
-        res.header('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+        res.header('Cache-Control', 'public, max-age=86400');
         res.status(200).send(xml);
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 
 
