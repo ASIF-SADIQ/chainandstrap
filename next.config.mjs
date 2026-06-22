@@ -16,6 +16,10 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/sitemap.xml',
+        destination: 'http://137.184.102.82:5000/sitemap.xml',
+      },
+      {
         source: '/backend-api/:path*',
         destination: 'http://137.184.102.82:5000/api/:path*',
       },
