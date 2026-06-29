@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import FilterSidebar from "./FilterSidebar";
 import ProductCard, { ProductCardSkeleton } from "./ProductCard";
 import { Filter } from "lucide-react";
@@ -11,6 +11,31 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [gotoPageInput, setGotoPageInput] = useState("");
+  const isFirstRender = useRef(true);
+
+  // Initialize page from URL on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const pageFromQuery = parseInt(params.get("page") || "1", 10);
+      if (pageFromQuery >= 1) {
+        setPage(pageFromQuery);
+      }
+    }
+  }, []);
+
+  // Listen to browser back/forward buttons (history popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const pageFromQuery = parseInt(params.get("page") || "1", 10);
+      setPage(pageFromQuery >= 1 ? pageFromQuery : 1);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const limit = 12;
 
@@ -85,9 +110,20 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
     fetchProducts(page);
   }, [filters, sort, page, fetchProducts]);
 
-  // Reset to page 1 when filters or sort change
+  // Reset to page 1 when filters or sort change, but skip on initial mount
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setPage(1);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("page")) {
+        params.delete("page");
+        window.history.pushState(null, '', `?${params.toString()}`);
+      }
+    }
   }, [filters, sort]);
 
   const totalPages = Math.ceil(total / limit);
@@ -95,7 +131,22 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
-      // Removed window.scrollTo so it doesn't jump to the top
+      
+      // Update URL query parameters so page number is preserved
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        params.set("page", newPage);
+        window.history.pushState(null, '', `?${params.toString()}`);
+      }
+    }
+  };
+
+  const handleGotoPageSubmit = (e) => {
+    e.preventDefault();
+    const pageNum = parseInt(gotoPageInput, 10);
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      handlePageChange(pageNum);
+      setGotoPageInput("");
     }
   };
 
@@ -202,39 +253,61 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
 
               {/* Numbered Pagination */}
               {totalPages > 1 && (
-                <div className="mt-16 flex justify-center items-center space-x-2">
-                  {/* Previous Button */}
-                  <button
-                    onClick={() => handlePageChange(page - 1)}
-                    disabled={page === 1}
-                    className="w-10 h-10 flex items-center justify-center border border-border-color text-text-secondary hover:border-gold hover:text-gold disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-color transition-all duration-300"
-                  >
-                    &larr;
-                  </button>
-
-                  {/* Page Numbers */}
-                  {getPageNumbers().map((pageNum) => (
+                <div className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    {/* Previous Button */}
                     <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`w-10 h-10 flex items-center justify-center border text-xs font-bold transition-all duration-300 ${
-                        page === pageNum
-                          ? "bg-gold border-gold text-black"
-                          : "border-border-color text-text-secondary hover:border-gold hover:text-gold"
-                      }`}
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page === 1}
+                      className="w-10 h-10 flex items-center justify-center border border-border-color text-text-secondary hover:border-gold hover:text-gold disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-color transition-all duration-300"
                     >
-                      {pageNum}
+                      &larr;
                     </button>
-                  ))}
 
-                  {/* Next Button */}
-                  <button
-                    onClick={() => handlePageChange(page + 1)}
-                    disabled={page === totalPages}
-                    className="w-10 h-10 flex items-center justify-center border border-border-color text-text-secondary hover:border-gold hover:text-gold disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-color transition-all duration-300"
-                  >
-                    &rarr;
-                  </button>
+                    {/* Page Numbers */}
+                    {getPageNumbers().map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-10 h-10 flex items-center justify-center border text-xs font-bold transition-all duration-300 ${
+                          page === pageNum
+                            ? "bg-gold border-gold text-black"
+                            : "border-border-color text-text-secondary hover:border-gold hover:text-gold"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+
+                    {/* Next Button */}
+                    <button
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page === totalPages}
+                      className="w-10 h-10 flex items-center justify-center border border-border-color text-text-secondary hover:border-gold hover:text-gold disabled:opacity-30 disabled:hover:text-text-secondary disabled:hover:border-border-color transition-all duration-300"
+                    >
+                      &rarr;
+                    </button>
+                  </div>
+
+                  {/* Go to Page Form */}
+                  <form onSubmit={handleGotoPageSubmit} className="flex items-center space-x-2 border border-border-color px-3 py-1 bg-bg-secondary rounded-sm">
+                    <span className="text-[10px] text-text-muted uppercase tracking-wider">Go to Page:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={gotoPageInput}
+                      onChange={(e) => setGotoPageInput(e.target.value)}
+                      placeholder={page}
+                      className="w-12 bg-transparent text-center text-xs font-bold text-white focus:outline-none focus:text-gold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-gold text-black text-[10px] font-bold px-2 py-1 rounded-sm hover:bg-white transition-colors uppercase tracking-wider"
+                    >
+                      Go
+                    </button>
+                  </form>
                 </div>
               )}
             </>
