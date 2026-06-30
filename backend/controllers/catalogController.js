@@ -63,9 +63,9 @@ exports.generatePinterestFeedXml = async (req, res) => {
         res.setHeader('Content-Type', 'application/xml');
         res.setHeader('Content-Disposition', 'inline; filename="feed.xml"');
 
-        // Write RSS header
+        // Write RSS header with Google and Media namespaces
         res.write(`<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0" xmlns:media="http://search.yahoo.com/mrss/">
   <channel>
     <title>Chain and Straps</title>
     <link>https://chainandstrap.store</link>
@@ -94,6 +94,7 @@ exports.generatePinterestFeedXml = async (req, res) => {
             const price = `${parseFloat(product['Variant Price'] || 0).toFixed(2)} USD`;
             const vendor = (product.vendor || 'Chain and Straps')
                 .replace(/\]\]>/g, ']]&gt;');
+            const pubDate = new Date(product.createdAt || Date.now()).toUTCString();
 
             const item = `    <item>
       <g:id>${id}</g:id>
@@ -105,6 +106,9 @@ exports.generatePinterestFeedXml = async (req, res) => {
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand><![CDATA[${vendor}]]></g:brand>
+      <pubDate>${pubDate}</pubDate>
+      <enclosure url="${imageLink}" type="image/jpeg" />
+      <media:content url="${imageLink}" type="image/jpeg" />
     </item>\n`;
 
             res.write(item);
