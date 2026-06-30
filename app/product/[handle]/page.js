@@ -170,7 +170,7 @@ export default async function ProductDetailPage({ params }) {
             </div>
 
             <a
-              href={`https://pinterest.com/pin/create/button/?url=https://chainandstrap.store/product/${product.Handle}&media=${encodeURIComponent(images[0] || "")}&description=${encodeURIComponent(pinterestDescription)}`}
+              href={`https://pinterest.com/pin/create/button/?url=https://chainandstrap.store/product/${product.Handle}&media=${encodeURIComponent(images[0] || "")}&title=${encodeURIComponent(product.Title)}&description=${encodeURIComponent(pinterestDescription)}`}
               target="_blank"
               rel="noopener"
               className="flex items-center justify-center text-text-muted hover:text-gold transition-colors text-xs tracking-widest uppercase mb-12"
