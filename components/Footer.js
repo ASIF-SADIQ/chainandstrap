@@ -16,9 +16,13 @@ export default function Footer() {
             <p className="text-text-secondary text-sm leading-relaxed mb-6">
               Curated pieces from the world's most iconic maisons. Redefining luxury for the modern era.
             </p>
-            <div className="flex space-x-4 text-text-muted">
-              <a href="#" className="hover:text-gold transition-colors"><Instagram size={20} /></a>
-              <a href="https://pinterest.com/chainandstrap" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors"><Facebook size={20} /></a>
+            <div className="flex space-x-4 text-text-muted items-center">
+              <a href="https://instagram.com/chainandstrap" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors"><Instagram size={20} /></a>
+              <a href="https://pinterest.com/chainandstrap" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors flex items-center" title="Pinterest">
+                <svg className="w-[20px] h-[20px]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.688 0 1.029-.653 2.568-.992 3.992-.283 1.193.598 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.279 1.14c-.038.154-.127.189-.286.115-1.068-.498-1.736-2.073-1.736-3.337 0-2.712 1.97-5.207 5.688-5.207 2.99 0 5.318 2.13 5.318 4.978 0 2.973-1.875 5.367-4.479 5.367-1.129 0-2.193-.585-2.556-1.279l-.693 2.641c-.25.959-.929 2.158-1.385 2.894 1.077.327 2.215.503 3.395.503 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
+                </svg>
+              </a>
               <a href="#" className="hover:text-gold transition-colors"><Twitter size={20} /></a>
               <a href="#" className="hover:text-gold transition-colors"><Youtube size={20} /></a>
             </div>
