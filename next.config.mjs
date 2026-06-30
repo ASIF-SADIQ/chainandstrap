@@ -13,6 +13,15 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/products/:handle',
+        destination: '/product/:handle',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

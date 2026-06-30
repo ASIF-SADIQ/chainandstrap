@@ -23,11 +23,14 @@ export async function generateMetadata({ params }) {
         title: `${product.Title} | Chain & Straps`,
         images: mainImage ? [{ url: mainImage }] : [],
         url: `https://chainandstrap.store/product/${product.Handle}`,
-        type: "website",
       },
       other: {
+        "og:type": "product",
+        "og:price:amount": (product["Variant Price"] || product.price || 0).toString(),
+        "og:price:currency": "USD",
         "product:price:amount": (product["Variant Price"] || product.price || 0).toString(),
-        "product:price:currency": "USD"
+        "product:price:currency": "USD",
+        "og:availability": "instock"
       }
     };
   } catch (e) {
@@ -90,6 +93,18 @@ export default async function ProductDetailPage({ params }) {
   const description = product["Body (HTML)"] || "";
   const formattedPrice = price ? `$${Number(price).toFixed(2)}` : "Price on Request";
 
+  // Helper to extract clean plain text from HTML description
+  const getPlainText = (html) => {
+    if (!html) return "";
+    return html
+      .replace(/<[^>]*>?/gm, '') // Strip HTML tags
+      .replace(/\s+/g, ' ') // Collapse extra whitespace
+      .trim();
+  };
+
+  const plainDescription = getPlainText(description).slice(0, 300);
+  const pinterestDescription = `${product.Title} by ${product.vendor} - ${formattedPrice}.${plainDescription ? ` ${plainDescription}` : ""}`;
+
   const schemaData = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -99,7 +114,7 @@ export default async function ProductDetailPage({ params }) {
     offers: {
       "@type": "Offer",
       price: price || 0,
-      priceCurrency: "PKR",
+      priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
   };
@@ -155,9 +170,9 @@ export default async function ProductDetailPage({ params }) {
             </div>
 
             <a
-              href={`https://pinterest.com/pin/create/button/?url=https://chainandstrap.store/product/${product.Handle}&media=${encodeURIComponent(images[0] || "")}&description=${encodeURIComponent(product.Title)}`}
+              href={`https://pinterest.com/pin/create/button/?url=https://chainandstrap.store/product/${product.Handle}&media=${encodeURIComponent(images[0] || "")}&description=${encodeURIComponent(pinterestDescription)}`}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener"
               className="flex items-center justify-center text-text-muted hover:text-gold transition-colors text-xs tracking-widest uppercase mb-12"
             >
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
