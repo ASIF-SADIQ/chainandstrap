@@ -253,7 +253,10 @@ exports.getProducts = async (req, res) => {
                     'Body (HTML)': { $first: '$Body (HTML)' },
                     status: { $first: '$status' },
                     images: { $push: '$Image Src' },
-                    createdAt: { $first: '$createdAt' }
+                    createdAt: { $first: '$createdAt' },
+                    isFeaturedOnHomepage: { $max: '$isFeaturedOnHomepage' },
+                    isBrandThumbnail: { $max: '$isBrandThumbnail' },
+                    brandThumbnailName: { $max: '$brandThumbnailName' }
                 }
             },
             // Secondary filter after grouping — catch anything still bad
@@ -324,7 +327,10 @@ exports.getProductByHandle = async (req, res) => {
                     'Variant Price': { $first: '$Variant Price' },
                     'Body (HTML)': { $first: '$Body (HTML)' },
                     status: { $first: '$status' },
-                    images: { $push: '$Image Src' }
+                    images: { $push: '$Image Src' },
+                    isBrandThumbnail: { $first: '$isBrandThumbnail' },
+                    brandThumbnailName: { $first: '$brandThumbnailName' },
+                    isFeaturedOnHomepage: { $first: '$isFeaturedOnHomepage' }
                 }
             }
         ];
@@ -336,6 +342,29 @@ exports.getProductByHandle = async (req, res) => {
         }
 
         res.status(200).json({ success: true, data: results[0] });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// 2c. Get Featured Products and Brand Thumbnails
+exports.getFeaturedProducts = async (req, res) => {
+    try {
+        // Fetch all products that are either featured or set as brand thumbnails
+        const [featured, thumbnails] = await Promise.all([
+            Product.find({ isFeaturedOnHomepage: true, isDeleted: { $ne: true } })
+                   .sort({ createdAt: -1 })
+                   .limit(20)
+                   .lean(),
+            Product.find({ isBrandThumbnail: true, isDeleted: { $ne: true } })
+                   .lean()
+        ]);
+
+        res.status(200).json({
+            success: true,
+            featured,
+            thumbnails
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -672,6 +701,7 @@ exports.bulkEditProducts = async (req, res) => {
         let done = false;
         let modifiedCount = 0;
         let totalProcessed = 0;
+        const updatedIds = [];
 
         while (!done) {
             let currentLimit = batchSize;
@@ -790,6 +820,26 @@ exports.bulkEditProducts = async (req, res) => {
                     }
                 }
 
+                // isFeaturedOnHomepage
+                if (updates.isFeaturedOnHomepage && updates.isFeaturedOnHomepage.enabled) {
+                    const { value } = updates.isFeaturedOnHomepage;
+                    if (product.isFeaturedOnHomepage !== value) {
+                        product.isFeaturedOnHomepage = value;
+                        changed = true;
+                    }
+                }
+
+                // isBrandThumbnail
+                if (updates.isBrandThumbnail && updates.isBrandThumbnail.enabled) {
+                    const { brand } = updates.isBrandThumbnail;
+                    if (brand) {
+                        // We will set this product as the brand thumbnail and handle clearing others later
+                        product.isBrandThumbnail = true;
+                        product.brandThumbnailName = brand;
+                        changed = true;
+                    }
+                }
+
                 if (changed) {
                     bulkOps.push({
                         updateOne: {
@@ -802,11 +852,15 @@ exports.bulkEditProducts = async (req, res) => {
                                     'Variant Price': product['Variant Price'],
                                     status: product.status,
                                     'Body (HTML)': product['Body (HTML)'],
-                                    stockCount: product.stockCount
+                                    stockCount: product.stockCount,
+                                    isFeaturedOnHomepage: product.isFeaturedOnHomepage,
+                                    isBrandThumbnail: product.isBrandThumbnail,
+                                    brandThumbnailName: product.brandThumbnailName
                                 }
                             }
                         }
                     });
+                    updatedIds.push(product._id);
                 }
             }
 
@@ -820,6 +874,20 @@ exports.bulkEditProducts = async (req, res) => {
                 done = true;
             } else {
                 skip += batchProducts.length;
+            }
+        }
+
+        // Cleanup old brand thumbnails if we just set a new one
+        if (updates.isBrandThumbnail && updates.isBrandThumbnail.enabled) {
+            const { brand } = updates.isBrandThumbnail;
+            if (brand && updatedIds.length > 0) {
+                await Product.updateMany({
+                    _id: { $nin: updatedIds },
+                    brandThumbnailName: brand
+                }, {
+                    $set: { isBrandThumbnail: false },
+                    $unset: { brandThumbnailName: "" }
+                });
             }
         }
 

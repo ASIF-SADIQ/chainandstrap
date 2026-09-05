@@ -49,7 +49,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
 
-const { getStats, getProducts, getProductByHandle, getSettings, updateSettings, getLogs, deleteProduct, restoreProduct, createProduct, uploadImages, updateProduct, bulkDeleteProducts, patchProductStatus, bulkEditProducts, countMatchingProducts, importProducts, exportPinterestCSV, getSitemap } = require('./controllers/productController');
+const { getStats, getProducts, getProductByHandle, getFeaturedProducts, getSettings, updateSettings, getLogs, deleteProduct, restoreProduct, createProduct, uploadImages, updateProduct, bulkDeleteProducts, patchProductStatus, bulkEditProducts, countMatchingProducts, importProducts, exportPinterestCSV, getSitemap } = require('./controllers/productController');
 const { register, login, getMe, getAllUsers, verifyEmail, resendOtp, forgotPassword, resetPassword } = require('./controllers/authController');
 const { addOrderItems, getMyOrders, getOrders, updateOrderStatus } = require('./controllers/orderController');
 const { getWishlist, toggleWishlist, syncWishlist } = require('./controllers/wishlistController');
@@ -78,6 +78,7 @@ app.get('/api/sitemap.xml', getSitemap);
 app.get('/api/stats', getStats);
 app.get('/api/products', getProducts);
 app.get('/api/products/count-match', protect, adminOnly, countMatchingProducts);
+app.get('/api/products/featured', getFeaturedProducts);
 app.get('/api/products/:handle', getProductByHandle);
 app.get('/api/settings', getSettings);
 app.post('/api/settings', updateSettings);

@@ -1,6 +1,50 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 export default function BrandGrid() {
+  const [thumbnails, setThumbnails] = useState({});
+
+  useEffect(() => {
+    const fetchThumbnails = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/products/featured`);
+        const result = await res.json();
+        
+        if (result.success && result.thumbnails) {
+          const map = {};
+          result.thumbnails.forEach(product => {
+            if (product.brandThumbnailName && product.images && product.images.length > 0) {
+              const image = product.images[0].split(',')[0].trim();
+              if (image) {
+                // Ensure image URL routes through our proxy if it's from Drive
+                if (image.includes("drive.google.com")) {
+                  const fileIdMatch = image.match(/id=([^&]+)/);
+                  if (fileIdMatch && fileIdMatch[1]) {
+                    map[product.brandThumbnailName] = `/api/image-proxy?id=${fileIdMatch[1]}`;
+                  }
+                } else {
+                  map[product.brandThumbnailName] = image;
+                }
+              }
+            }
+          });
+          setThumbnails(map);
+        }
+      } catch (error) {
+        console.error("Error fetching brand thumbnails:", error);
+      }
+    };
+
+    fetchThumbnails();
+  }, []);
+
+  const getBrandImage = (brandName, defaultImg) => {
+    return thumbnails[brandName] || defaultImg;
+  };
+
   const brands = [
     { name: "Louis Vuitton", slug: "lv", image: "/images/brands/lv_bg_1788622877325.png" },
     { name: "Chanel", slug: "chanel", image: "/images/brands/chanel_bg_1788622889933.png" },
@@ -37,7 +81,7 @@ export default function BrandGrid() {
             >
               {/* Background Image with Zoom on Hover */}
               <img 
-                src={brand.image} 
+                src={getBrandImage(brand.name, brand.image)} 
                 alt={`${brand.name} collection`} 
                 className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-70 group-hover:scale-110 transition-all duration-700 ease-in-out"
               />

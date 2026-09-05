@@ -91,7 +91,9 @@ export default function AdminProductsPage() {
     price: { enabled: false, type: "set_value", value: "" },
     status: { enabled: false, type: "set_value", value: "pending" },
     bodyHtml: { enabled: false, type: "set_value", value: "", find: "", replace: "" },
-    stockCount: { enabled: false, type: "set_value", value: "10" }
+    stockCount: { enabled: false, type: "set_value", value: "10" },
+    isFeaturedOnHomepage: { enabled: false, type: "set_value", value: false },
+    isBrandThumbnail: { enabled: false, type: "set_value", brand: "" }
   });
 
   // Import/Export States
@@ -1052,7 +1054,20 @@ export default function AdminProductsPage() {
                               <Package size={16} className="text-[#444]" />
                             </div>
                           )}
-                          <p className="text-white text-sm line-clamp-1">{title}</p>
+                          <div>
+                            <p className="text-white text-sm line-clamp-1 flex items-center gap-2">
+                              {title}
+                              {product.isFeaturedOnHomepage && (
+                                <span title="Featured on Homepage" className="text-yellow-400 text-xs shadow-black drop-shadow-md">⭐</span>
+                              )}
+                              {product.isBrandThumbnail && (
+                                <span title={`Thumbnail for ${product.brandThumbnailName}`} className="text-blue-400 text-xs shadow-black drop-shadow-md">🖼️</span>
+                              )}
+                            </p>
+                            {product.isBrandThumbnail && (
+                              <p className="text-[10px] text-blue-500/70">{product.brandThumbnailName} Thumbnail</p>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[#b8972e] text-xs tracking-wider uppercase">{vendor}</td>
@@ -2098,6 +2113,86 @@ export default function AdminProductsPage() {
                     />
                   </div>
                 )}
+              </div>
+
+              {/* 7. Feature on Homepage */}
+              <div className={`p-4 rounded border transition-colors ${bulkEditParams.isFeaturedOnHomepage.enabled ? 'bg-[#181510] border-[#b8972e]/30' : 'bg-transparent border-[#222]'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2 text-white font-semibold text-xs cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={bulkEditParams.isFeaturedOnHomepage.enabled}
+                      onChange={(e) => setBulkEditParams(p => ({
+                        ...p,
+                        isFeaturedOnHomepage: { ...p.isFeaturedOnHomepage, enabled: e.target.checked }
+                      }))}
+                      className="accent-[#b8972e]"
+                    />
+                    Feature on Homepage
+                  </label>
+                </div>
+                {bulkEditParams.isFeaturedOnHomepage.enabled && (
+                  <div className="pl-6 max-w-xs mt-2">
+                    <label className="block text-[#888] text-[10px] uppercase tracking-wider mb-1">Set Featured Status</label>
+                    <select
+                      value={bulkEditParams.isFeaturedOnHomepage.value}
+                      onChange={(e) => setBulkEditParams(p => ({
+                        ...p,
+                        isFeaturedOnHomepage: { ...p.isFeaturedOnHomepage, value: e.target.value === 'true' }
+                      }))}
+                      className="w-full bg-[#1c1c1c] border border-[#333] text-white px-3 py-2 text-xs rounded focus:outline-none focus:border-[#b8972e] cursor-pointer"
+                    >
+                      <option value="true">Yes, show on homepage</option>
+                      <option value="false">No, remove from homepage</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* 8. Set as Brand Thumbnail */}
+              <div className={`p-4 rounded border transition-colors ${bulkEditParams.isBrandThumbnail.enabled ? 'bg-[#181510] border-[#b8972e]/30' : 'bg-transparent border-[#222]'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2 text-white font-semibold text-xs cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={bulkEditParams.isBrandThumbnail.enabled}
+                      onChange={(e) => setBulkEditParams(p => ({
+                        ...p,
+                        isBrandThumbnail: { ...p.isBrandThumbnail, enabled: e.target.checked }
+                      }))}
+                      className="accent-[#b8972e]"
+                    />
+                    Set as Brand Thumbnail (Category Grid)
+                  </label>
+                </div>
+                {bulkEditParams.isBrandThumbnail.enabled && (
+                  <div className="pl-6 max-w-xs mt-2">
+                    <label className="block text-[#888] text-[10px] uppercase tracking-wider mb-1">Select Brand</label>
+                    <select
+                      value={bulkEditParams.isBrandThumbnail.brand}
+                      onChange={(e) => setBulkEditParams(p => ({
+                        ...p,
+                        isBrandThumbnail: { ...p.isBrandThumbnail, brand: e.target.value }
+                      }))}
+                      className="w-full bg-[#1c1c1c] border border-[#333] text-white px-3 py-2 text-xs rounded focus:outline-none focus:border-[#b8972e] cursor-pointer"
+                    >
+                      <option value="">-- Choose a Brand --</option>
+                      <option value="Louis Vuitton">Louis Vuitton</option>
+                      <option value="Chanel">Chanel</option>
+                      <option value="Gucci">Gucci</option>
+                      <option value="Dior">Dior</option>
+                      <option value="Prada">Prada</option>
+                      <option value="YSL">YSL</option>
+                      <option value="Fendi">Fendi</option>
+                      <option value="Valentino">Valentino</option>
+                      <option value="Versace">Versace</option>
+                      <option value="Dolce & Gabbana">Dolce & Gabbana</option>
+                    </select>
+                    <p className="text-[10px] text-[#888] mt-1">This replaces any previous thumbnail set for this brand.</p>
+                  </div>
+                )}
+              </div>
+            </div>
               </div>
             </form>
             {/* Modal Footer */}

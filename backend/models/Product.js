@@ -9,6 +9,9 @@ const productSchema = new mongoose.Schema({
     images: [String],
     'Body (HTML)': String,
     status: { type: String, default: 'pending' },
+    isBrandThumbnail: { type: Boolean, default: false },
+    brandThumbnailName: String,
+    isFeaturedOnHomepage: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false }, // Soft Delete flag
     isBroken: { type: Boolean, default: false },  // Mark as unpostable if it fails 3 times
     stockCount: { type: Number, default: 10 },    // Track inventory

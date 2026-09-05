@@ -3,6 +3,7 @@ import ProductGrid from "@/components/ProductGrid";
 import HeroContent from "@/components/HeroContent";
 import BrandGrid from "@/components/BrandGrid";
 import { API_BASE } from "@/lib/config";
+import FeaturedProducts from "@/components/FeaturedProducts";
 
 import HeroBackground from "@/components/HeroBackground";
 
@@ -41,6 +42,9 @@ export default async function Home() {
 
       {/* SECTION 3 - BRAND GRID */}
       <BrandGrid />
+
+      {/* SECTION 4 - FEATURED COLLECTION */}
+      <FeaturedProducts />
 
       {/* SECTION 5 - FEATURED PRODUCTS (Paginated) */}
       <section className="py-12 bg-bg-secondary border-t border-border-color">
