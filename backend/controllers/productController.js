@@ -121,11 +121,7 @@ exports.getProducts = async (req, res) => {
                 );
             }
 
-            if (matchedAbbrs.size > 0) {
-                matchedAbbrs.forEach(abbr => {
-                    orStages.push({ 'Body (HTML)': { $regex: new RegExp(`\\b${abbr}\\b`) } });
-                });
-            }
+            // Removed Body (HTML) check for search as well due to hardcoded 'LV' in all products.
 
             matchStage.$or = orStages;
         }
@@ -224,10 +220,8 @@ exports.getProducts = async (req, res) => {
                     { Handle: { $regex: new RegExp(b, 'i') } }
                 ];
 
-                if (matchedAbbr) {
-                    conditions.push({ 'Body (HTML)': { $regex: new RegExp(`\\b${matchedAbbr}\\b`) } });
-                }
-
+                // Removed Body (HTML) check because 'LV' was hardcoded into all product descriptions
+                // which caused every product to match 'lv' brand searches.
                 orConditions.push(...conditions);
             });
 
@@ -268,11 +262,24 @@ exports.getProducts = async (req, res) => {
                     Title: { $nin: ['', null, 'undefined'] },
                     'Variant Price': { $gt: 0 }
                 }
-            },
-            { $sort: { createdAt: -1 } },
-            { $skip: skipVal },
-            { $limit: limit }
-        ];
+            }
+        ]; // <-- CLOSED PIPELINE HERE
+
+        // Dynamic Sorting & Pagination
+        const sortParam = req.query.sort;
+        
+        if (sortParam === 'random') {
+            pipeline.push({ $sample: { size: parseInt(limit) } });
+            // For random, we don't skip to keep it simple, but we still limit.
+        } else {
+            let sortStage = { createdAt: -1 }; // default newest
+            if (sortParam === 'price_asc') sortStage = { 'Variant Price': 1 };
+            if (sortParam === 'price_desc') sortStage = { 'Variant Price': -1 };
+            
+            pipeline.push({ $sort: sortStage });
+            pipeline.push({ $skip: skipVal });
+            pipeline.push({ $limit: parseInt(limit) });
+        }
 
         const countPipeline = [
             { $match: matchStage },
