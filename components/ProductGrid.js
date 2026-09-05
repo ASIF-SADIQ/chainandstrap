@@ -37,7 +37,7 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const limit = 12;
+  const limit = 20;
 
   const [filters, setFilters] = useState({
     brands: initialBrand ? [initialBrand] : [],
@@ -46,6 +46,14 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
   });
   const [sort, setSort] = useState("newest");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Sync props to state if they change (e.g. client-side navigation)
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      brands: initialBrand ? [initialBrand] : []
+    }));
+  }, [initialBrand]);
 
   // Dynamic Title Logic — reflects both category and brand selections
   const buildDisplayTitle = () => {
@@ -83,6 +91,9 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
       if (sort === "price-low") params.set("sort", "price_asc");
       else if (sort === "price-high") params.set("sort", "price_desc");
 
+      // Add cache buster
+      params.set("t", Date.now().toString());
+
       return params.toString();
     },
     [filters, sort]
@@ -92,8 +103,14 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
     async (pageNum) => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE}/products?${buildQueryString(pageNum)}`);
+        const liveApiBase = "https://chainandstrap.store/api";
+        const url = `${liveApiBase}/products?${buildQueryString(pageNum)}`;
+        console.log("Fetching products from:", url);
+        
+        const res = await fetch(url);
         const data = await res.json();
+        console.log("API Response:", data);
+        
         setProducts(data.data || []);
         setTotal(data.total || 0);
       } catch (error) {
@@ -230,10 +247,10 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
                 textTransform: 'uppercase',
                 marginBottom: '32px',
               }}>
-                We are restocking our premium luxury catalog. Stay tuned.
+                We are restocking our local bags catalog. Stay tuned.
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', flexWrap: 'wrap' }}>
-                {['Louis Vuitton', 'Gucci', 'Prada', 'Chanel', 'Dior'].map(brand => (
+                {['Local Bags', 'Premium Quality', 'Handcrafted'].map(brand => (
                   <span key={brand} style={{
                     fontSize: '11px',
                     letterSpacing: '0.3em',
