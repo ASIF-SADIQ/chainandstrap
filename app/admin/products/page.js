@@ -2192,8 +2192,6 @@ export default function AdminProductsPage() {
                   </div>
                 )}
               </div>
-            </div>
-              </div>
             </form>
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-[#222] flex justify-end gap-3 bg-[#0d0d0d]">
