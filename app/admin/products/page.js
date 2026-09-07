@@ -8,7 +8,14 @@ import { API_BASE } from "@/lib/config";
 const getGoogleDriveThumbnail = (url) => {
   if (!url) return '';
   const trimmedUrl = url.trim();
-  if (!trimmedUrl.includes('drive.google.com')) return trimmedUrl;
+  
+  // Proxy non-Google Drive URLs (like S3 or DO Spaces) through wsrv.nl for instant loading & resizing
+  if (!trimmedUrl.includes('drive.google.com')) {
+    if (trimmedUrl.includes('amazonaws.com') || trimmedUrl.includes('digitaloceanspaces.com')) {
+      return `https://wsrv.nl/?url=${encodeURIComponent(trimmedUrl)}&w=100&output=webp&q=80`;
+    }
+    return trimmedUrl;
+  }
   
   let fileId = '';
   // Format 1: /file/d/FILE_ID/...
