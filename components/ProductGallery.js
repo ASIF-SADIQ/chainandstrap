@@ -12,7 +12,7 @@ export default function ProductGallery({ images, title }) {
     if (url.includes("digitaloceanspaces.com") && !url.includes(".cdn.")) {
         url = url.replace("sfo3.digitaloceanspaces.com", "sfo3.cdn.digitaloceanspaces.com");
     }
-    if (url.includes("digitaloceanspaces.com")) {
+    if (url.includes("digitaloceanspaces.com") || url.includes("amazonaws.com")) {
         return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=800&output=webp&q=80`;
     }
     return url;
@@ -23,38 +23,47 @@ export default function ProductGallery({ images, title }) {
   const prev = () => setMainImageIndex((i) => (i - 1 + total) % total);
   const next = () => setMainImageIndex((i) => (i + 1) % total);
 
+  if (total === 0) {
+    return (
+      <div className="w-full aspect-[4/5] bg-bg-secondary flex items-center justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/placeholder.png" alt="Placeholder" className="w-full h-full object-cover opacity-50" />
+      </div>
+    );
+  }
+
   return (
-    <div className="lg:sticky lg:top-32">
-      {/* Main Image — constrained size */}
-      <div className="relative w-full max-w-sm mx-auto bg-bg-secondary overflow-hidden group aspect-[3/4]">
+    <div className="w-full lg:sticky lg:top-32 flex flex-col gap-4">
+      {/* Main Image */}
+      <div className="relative w-full bg-[#f8f8f8] dark:bg-bg-secondary overflow-hidden group aspect-[4/5] md:aspect-[3/4]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={validImages[mainImageIndex] || "/placeholder.png"}
+          src={validImages[mainImageIndex]}
           alt={title}
-          className="w-full h-full object-cover transition-all duration-500"
+          className="w-full h-full object-cover object-center transition-opacity duration-500"
         />
 
         {/* Counter badge */}
-        <div className="absolute bottom-3 right-3 bg-black/70 px-3 py-1 text-xs text-gold tracking-widest">
-          {mainImageIndex + 1} / {Math.max(1, total)}
+        <div className="absolute bottom-4 right-4 bg-black/80 px-4 py-2 text-xs font-bold text-white tracking-[0.2em] uppercase backdrop-blur-md">
+          {mainImageIndex + 1} / {total}
         </div>
 
-        {/* Prev / Next arrows — show only if multiple images */}
+        {/* Prev / Next arrows */}
         {total > 1 && (
           <>
             <button
               onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-gold text-white hover:text-black p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-black text-black hover:text-white p-3 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 shadow-lg"
               aria-label="Previous image"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={24} strokeWidth={1.5} />
             </button>
             <button
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-gold text-white hover:text-black p-2 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-black text-black hover:text-white p-3 rounded-full transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 shadow-lg"
               aria-label="Next image"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={24} strokeWidth={1.5} />
             </button>
           </>
         )}
@@ -62,22 +71,25 @@ export default function ProductGallery({ images, title }) {
 
       {/* Thumbnails strip */}
       {total > 1 && (
-        <div className="flex gap-3 overflow-x-auto pb-3 mt-4 max-w-sm mx-auto custom-scrollbar">
+        <div 
+          className="flex gap-3 overflow-x-auto pb-2 w-full snap-x snap-mandatory" 
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {validImages.map((img, i) => (
             <button
               key={i}
               onClick={() => setMainImageIndex(i)}
-              className={`w-16 h-20 flex-shrink-0 border-2 transition-all duration-200 overflow-hidden ${
+              className={`relative w-20 lg:w-24 aspect-[4/5] flex-shrink-0 snap-start overflow-hidden transition-all duration-300 ${
                 i === mainImageIndex
-                  ? "border-gold scale-105"
-                  : "border-transparent hover:border-border-color"
+                  ? "ring-1 ring-black dark:ring-[#d4af37] opacity-100 shadow-md"
+                  : "opacity-50 hover:opacity-100"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={img}
                 alt={`${title} thumbnail ${i + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
               />
             </button>
           ))}
