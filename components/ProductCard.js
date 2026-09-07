@@ -26,11 +26,11 @@ export default function ProductCard({ product }) {
       hoverImage = hoverImage.replace("sfo3.digitaloceanspaces.com", "sfo3.cdn.digitaloceanspaces.com");
   }
   
-  // ULTRA FAST IMAGE OPTIMIZATION: Wrap DO Spaces URLs with Cloudflare-backed proxy to resize 5MB images to ~30KB WebP
-  if (mainImage.includes("digitaloceanspaces.com")) {
+  // ULTRA FAST IMAGE OPTIMIZATION: Wrap DO Spaces / AWS S3 URLs with Cloudflare-backed proxy to resize 5MB images to ~30KB WebP
+  if (mainImage.includes("digitaloceanspaces.com") || mainImage.includes("amazonaws.com")) {
       mainImage = `https://wsrv.nl/?url=${encodeURIComponent(mainImage)}&w=500&output=webp&q=80`;
   }
-  if (hoverImage.includes("digitaloceanspaces.com")) {
+  if (hoverImage.includes("digitaloceanspaces.com") || hoverImage.includes("amazonaws.com")) {
       hoverImage = `https://wsrv.nl/?url=${encodeURIComponent(hoverImage)}&w=500&output=webp&q=80`;
   }
   
