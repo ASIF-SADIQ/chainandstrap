@@ -252,7 +252,7 @@ exports.getProducts = async (req, res) => {
                     'Variant Price': { $max: '$Variant Price' },
                     'Body (HTML)': { $first: '$Body (HTML)' },
                     status: { $first: '$status' },
-                    images: { $push: '$Image Src' },
+                    images: { $first: '$images' },
                     createdAt: { $first: '$createdAt' },
                     isFeaturedOnHomepage: { $max: '$isFeaturedOnHomepage' },
                     isBrandThumbnail: { $max: '$isBrandThumbnail' },
@@ -327,7 +327,7 @@ exports.getProductByHandle = async (req, res) => {
                     'Variant Price': { $first: '$Variant Price' },
                     'Body (HTML)': { $first: '$Body (HTML)' },
                     status: { $first: '$status' },
-                    images: { $push: '$Image Src' },
+                    images: { $first: '$images' },
                     isBrandThumbnail: { $first: '$isBrandThumbnail' },
                     brandThumbnailName: { $first: '$brandThumbnailName' },
                     isFeaturedOnHomepage: { $first: '$isFeaturedOnHomepage' }
