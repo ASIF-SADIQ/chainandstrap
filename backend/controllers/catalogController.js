@@ -34,8 +34,9 @@ exports.generatePinterestCatalog = async (req, res) => {
             // Product Link
             const link = escapeCSV(`https://chainandstrap.store/product/${product.Handle || product._id}`);
             
-            // Image Link
-            const image_link = escapeCSV(product['Image Src'] || 'https://chainandstrap.store/placeholder.png');
+            // Image Link — use the images array (S3), fallback to legacy Image Src
+            const productImages = product.images || [];
+            const image_link = escapeCSV(productImages[0] || product['Image Src'] || 'https://chainandstrap.store/placeholder.png');
             
             // Price format for Pinterest: "285.04 USD"
             const price = escapeCSV(`${product['Variant Price']} USD`);
@@ -89,12 +90,19 @@ exports.generatePinterestFeedXml = async (req, res) => {
 
             const id = product.Handle || product._id;
             const link = `https://chainandstrap.store/product/${product.Handle || product._id}`;
-            const imageSrc = (product['Image Src'] || '').split(',')[0].trim();
-            const imageLink = imageSrc || 'https://chainandstrap.store/placeholder.png';
+            // Use images array (S3), fallback to legacy Image Src
+            const productImages = (product.images || []).filter(Boolean);
+            const imageLink = productImages[0] || (product['Image Src'] || '').split(',')[0].trim() || 'https://chainandstrap.store/placeholder.png';
+            const additionalImages = productImages.slice(1, 11); // Up to 10 additional images
             const price = `${parseFloat(product['Variant Price'] || 0).toFixed(2)} USD`;
             const vendor = (product.vendor || 'Chain and Straps')
                 .replace(/\]\]>/g, ']]&gt;');
             const pubDate = new Date(product.createdAt || Date.now()).toUTCString();
+
+            // Build additional image lines
+            const additionalImageLines = additionalImages
+                .map(img => `      <g:additional_image_link>${img}</g:additional_image_link>`)
+                .join('\n');
 
             const item = `    <item>
       <g:id>${id}</g:id>
@@ -102,7 +110,7 @@ exports.generatePinterestFeedXml = async (req, res) => {
       <description><![CDATA[${cleanDescription}]]></description>
       <link>${link}</link>
       <g:image_link>${imageLink}</g:image_link>
-      <g:price>${price}</g:price>
+${additionalImageLines ? additionalImageLines + '\n' : ''}      <g:price>${price}</g:price>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand><![CDATA[${vendor}]]></g:brand>
