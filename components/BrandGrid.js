@@ -25,6 +25,9 @@ export default function BrandGrid() {
                   if (fileIdMatch && fileIdMatch[1]) {
                     map[product.brandThumbnailName] = `/api/image-proxy?id=${fileIdMatch[1]}`;
                   }
+                } else if (image.includes("amazonaws.com") || image.includes("digitaloceanspaces.com")) {
+                  // Proxy S3 / Spaces images via wsrv.nl for instant loading and resizing
+                  map[product.brandThumbnailName] = `https://wsrv.nl/?url=${encodeURIComponent(image)}&w=600&output=webp&q=80`;
                 } else {
                   map[product.brandThumbnailName] = image;
                 }
