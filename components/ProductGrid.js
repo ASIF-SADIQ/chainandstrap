@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import FilterSidebar from "./FilterSidebar";
 import ProductCard, { ProductCardSkeleton } from "./ProductCard";
 import { Filter } from "lucide-react";
@@ -39,21 +40,29 @@ export default function ProductGrid({ title, initialCategory, initialBrand, hide
 
   const limit = 20;
 
+  const searchParams = useSearchParams();
+  const urlBrand = searchParams ? searchParams.get("brand") : null;
+  const urlCategory = searchParams ? searchParams.get("category") : null;
+
+  const activeBrand = urlBrand || initialBrand;
+  const activeCategory = urlCategory || initialCategory;
+
   const [filters, setFilters] = useState({
-    brands: initialBrand ? [initialBrand] : [],
-    categories: initialCategory ? [initialCategory] : [],
+    brands: activeBrand ? [activeBrand] : [],
+    categories: activeCategory ? [activeCategory] : [],
     price: [0, 5000000],
   });
   const [sort, setSort] = useState("newest");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Sync props to state if they change (e.g. client-side navigation)
+  // Sync URL/props to state if they change (e.g. client-side navigation)
   useEffect(() => {
     setFilters(prev => ({
       ...prev,
-      brands: initialBrand ? [initialBrand] : []
+      brands: activeBrand ? [activeBrand] : [],
+      categories: activeCategory ? [activeCategory] : []
     }));
-  }, [initialBrand]);
+  }, [activeBrand, activeCategory]);
 
   // Dynamic Title Logic — reflects both category and brand selections
   const buildDisplayTitle = () => {
