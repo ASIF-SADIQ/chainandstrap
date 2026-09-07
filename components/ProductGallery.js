@@ -35,7 +35,7 @@ export default function ProductGallery({ images, title }) {
   return (
     <div className="w-full lg:sticky lg:top-32 flex flex-col gap-4">
       {/* Main Image */}
-      <div className="relative w-full bg-[#f8f8f8] dark:bg-bg-secondary overflow-hidden group aspect-[4/5] md:aspect-[3/4]">
+      <div className="relative w-full bg-[#f8f8f8] dark:bg-bg-secondary overflow-hidden group aspect-square">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={validImages[mainImageIndex]}
@@ -79,7 +79,7 @@ export default function ProductGallery({ images, title }) {
             <button
               key={i}
               onClick={() => setMainImageIndex(i)}
-              className={`relative w-20 lg:w-24 aspect-[4/5] flex-shrink-0 snap-start overflow-hidden transition-all duration-300 ${
+              className={`relative w-20 lg:w-24 aspect-square flex-shrink-0 snap-start overflow-hidden transition-all duration-300 ${
                 i === mainImageIndex
                   ? "ring-1 ring-black dark:ring-[#d4af37] opacity-100 shadow-md"
                   : "opacity-50 hover:opacity-100"
