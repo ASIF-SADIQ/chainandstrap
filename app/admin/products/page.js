@@ -581,7 +581,9 @@ export default function AdminProductsPage() {
         price: { enabled: false, type: "set_value", value: "" },
         status: { enabled: false, type: "set_value", value: "pending" },
         bodyHtml: { enabled: false, type: "set_value", value: "", find: "", replace: "" },
-        stockCount: { enabled: false, type: "set_value", value: "10" }
+        stockCount: { enabled: false, type: "set_value", value: "10" },
+        isFeaturedOnHomepage: { enabled: false, type: "set_value", value: false },
+        isBrandThumbnail: { enabled: false, type: "set_value", brand: "" }
       });
       fetchProducts();
     } catch (err) {
